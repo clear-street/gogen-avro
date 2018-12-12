@@ -25,6 +25,15 @@ func (e %v) String() string {
 }
 `
 
+const enumTypeParser = `
+func (e %v) MustParse(val string) %v {
+	switch val {
+		%v
+	}
+	panic("unknown value: " + val)
+}
+`
+
 const enumSerializerDef = `
 func %v(r %v, w io.Writer) error {
 	return writeInt(int32(r), w)
@@ -88,6 +97,14 @@ func (e *EnumDefinition) stringerList() string {
 	return stringerStr
 }
 
+func (e *EnumDefinition) parserList() string {
+	parserStr := ""
+	for i, t := range e.symbols {
+		parserStr += fmt.Sprintf("case \"%v\":\n return %v\n", generator.ToPublicName(strings.Title(t)), i)
+	}
+	return parserStr
+}
+
 func (e *EnumDefinition) structDef() string {
 	var doc string
 	if e.doc != "" {
@@ -98,6 +115,10 @@ func (e *EnumDefinition) structDef() string {
 
 func (e *EnumDefinition) stringerDef() string {
 	return fmt.Sprintf(enumTypeStringer, e.GoType(), e.stringerList())
+}
+
+func (e *EnumDefinition) parserDef() string {
+	return fmt.Sprintf(enumTypeParser, e.GoType(), e.GoType(), e.parserList())
 }
 
 func (e *EnumDefinition) serializerMethodDef() string {
@@ -123,6 +144,7 @@ func (e *EnumDefinition) filename() string {
 func (e *EnumDefinition) AddStruct(p *generator.Package, _ bool) error {
 	p.AddStruct(e.filename(), e.GoType(), e.structDef())
 	p.AddFunction(e.filename(), e.GoType(), "String", e.stringerDef())
+	p.AddFunction(e.filename(), e.GoType(), "Parse", e.parserDef())
 	return nil
 }
 
