@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"github.com/actgardner/gogen-avro/generator"
 	"strings"
+
+	"github.com/clear-street/gogen-avro/generator"
 )
 
 const enumTypeDef = `

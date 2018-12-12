@@ -8,8 +8,8 @@ import (
 
 	"github.com/golang/snappy"
 
-	"github.com/actgardner/gogen-avro/container/avro"
-	"github.com/actgardner/gogen-avro/types"
+	"github.com/clear-street/gogen-avro/container/avro"
+	"github.com/clear-street/gogen-avro/types"
 )
 
 /**
