@@ -15,20 +15,6 @@ type %v struct {
 }
 `
 
-const recordEventTemplate = `func %v(data *%v, event interface{}) error {
-buf := bytes.Buffer{}
-if err := data.Serialize(&buf); err != nil {
-	return err
-}
-
-name := reflect.TypeOf(data).Name()
-elem := reflect.ValueOf(&event).Elem()
-elem.FieldByName("Type").SetString(name)
-elem.FieldByName("Data").SetString(base64.StdEncoding.EncodeToString(buf.Bytes()))
-return nil
-}
-`
-
 const recordSchemaTemplate = `func (r %v) Schema() string {
  return %v
 }
@@ -206,22 +192,12 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 			return err
 		}
 
-		eventMethodDef, err := r.eventMethodDef()
-		if err != nil {
-			return err
-		}
-
 		if containers {
 			p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/container")
 			p.AddFunction(r.filename(), "", r.recordWriterMethod(), r.recordWriterMethodDef())
 		}
 
 		p.AddFunction(r.filename(), r.GoType(), r.ConstructorMethod(), constructorMethodDef)
-
-		p.AddImport(r.filename(), "encoding/base64")
-		p.AddImport(r.filename(), "bytes")
-		p.AddImport(r.filename(), "reflect")
-		p.AddFunction(r.filename(), r.GoType(), r.eventMethod(), eventMethodDef)
 		for _, f := range r.fields {
 			f.Type().AddStruct(p, containers)
 		}
@@ -322,14 +298,6 @@ func (r *RecordDefinition) ConstructorMethodDef() (string, error) {
 	}
 
 	return fmt.Sprintf(recordConstructorTemplate, r.ConstructorMethod(), r.GoType(), r.Name(), fieldConstructors, defaults), nil
-}
-
-func (r *RecordDefinition) eventMethod() string {
-	return fmt.Sprintf("%vEvent", r.Name())
-}
-
-func (r *RecordDefinition) eventMethodDef() (string, error) {
-	return fmt.Sprintf(recordEventTemplate, r.eventMethod(), r.Name()), nil
 }
 
 func (r *RecordDefinition) FieldByName(name string) *Field {
