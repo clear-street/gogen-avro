@@ -26,8 +26,8 @@ func (e %v) String() string {
 `
 
 const enumTypeParser = `
-func %vParse(val string) %v {
-	switch strings.ToUpper(val) {
+func Parse%v(val string) %v {
+	switch val {
 		%v
 	}
 	panic("unknown value: " + val)
@@ -100,7 +100,7 @@ func (e *EnumDefinition) stringerList() string {
 func (e *EnumDefinition) parserList() string {
 	parserStr := ""
 	for i, t := range e.symbols {
-		parserStr += fmt.Sprintf("case \"%v\":\n return %v\n", generator.ToPublicName(strings.Title(t)), i)
+		parserStr += fmt.Sprintf("case %q:\n return %v\n", t, i)
 	}
 	return parserStr
 }
