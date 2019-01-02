@@ -145,7 +145,6 @@ func (e *EnumDefinition) AddStruct(p *generator.Package, _ bool) error {
 	p.AddStruct(e.filename(), e.GoType(), e.structDef())
 	p.AddFunction(e.filename(), e.GoType(), "String", e.stringerDef())
 	p.AddFunction(e.filename(), e.GoType(), "Parse", e.parserDef())
-	p.AddImport(e.filename(), "strings")
 	return nil
 }
 
