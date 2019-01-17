@@ -90,6 +90,15 @@ func (s *unionField) unionTypeDef() string {
 	return fmt.Sprintf("type %v struct{\n%v\n}\n", s.Name(), unionFields)
 }
 
+func (s *unionField) unionSetMethodDef(u AvroType) string {
+	return fmt.Sprintf(`
+		func (u *%v) Set%v(val %v) {
+			u.%v = val
+			u.UnionType = %v
+		}
+	`, s.Name(), u.Name(), u.GoType(), u.Name(), s.unionEnumType()+u.Name())
+}
+
 func (s *unionField) unionSerializer() string {
 	switchCase := ""
 	for _, t := range s.itemType {
@@ -126,6 +135,9 @@ func (s *unionField) AddStruct(p *generator.Package, containers bool) error {
 		if err != nil {
 			return err
 		}
+	}
+	for _, f := range s.itemType {
+		p.AddFunction(s.filename(), "", f.Name(), s.unionSetMethodDef(f))
 	}
 	return nil
 }
