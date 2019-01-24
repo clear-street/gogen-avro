@@ -102,7 +102,7 @@ func (s *unionField) unionSetMethodDef(u AvroType) string {
 func (s *unionField) unionIdentityMethodDef(u AvroType) string {
 	return fmt.Sprintf(`
 		func (u *%v) Is%v() bool {
-			u.UnionType == %v
+			return u.UnionType == %v
 		}
 	`, s.Name(), u.Name(), s.unionEnumType()+u.Name())
 }
