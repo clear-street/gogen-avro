@@ -20,6 +20,11 @@ const recordSchemaTemplate = `func (r %v) Schema() string {
 }
 `
 
+const recordQualifiedName = `func (r %v) QualifiedName() (string, string) {
+	return %q, %q
+}
+`
+
 const recordConstructorTemplate = `
 	func %v %v {
 		v := &%v{
@@ -177,6 +182,11 @@ func (r *RecordDefinition) schemaMethodDef() (string, error) {
 	return fmt.Sprintf(recordSchemaTemplate, r.GoType(), strconv.Quote(string(schemaJson))), nil
 }
 
+func (r *RecordDefinition) qualifiedNameMethodDef() (string, error) {
+	avroName := r.AvroName()
+	return fmt.Sprintf(recordQualifiedName, r.GoType(), avroName.Namespace, avroName.Name), nil
+}
+
 func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) error {
 	// Import guard, to avoid circular dependencies
 	if !p.HasStruct(r.filename(), r.GoType()) {
@@ -191,6 +201,13 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 		if err != nil {
 			return err
 		}
+
+		qnDef, err := r.qualifiedNameMethodDef()
+		if err != nil {
+			return err
+		}
+
+		p.AddFunction(r.filename(), r.GoType(), "QualifiedName", qnDef)
 
 		if containers {
 			p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/container")
