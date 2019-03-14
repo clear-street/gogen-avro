@@ -81,6 +81,23 @@ func (s *unionField) unionEnumDef() string {
 	return fmt.Sprintf("type %v int\nconst(\n%v)\n", s.unionEnumType(), unionTypes)
 }
 
+func (s *unionField) unionStringerMethodDef() string {
+	var cases string
+	for _, item := range s.itemType {
+		cases += fmt.Sprintf("case %v:\nreturn %q\n", s.unionEnumType()+item.Name(), item.Name())
+	}
+
+	return fmt.Sprintf(`
+		func (u *%v) Stringify() string {
+			switch u.UnionType {
+				%v
+			default:
+				return "unknown"
+			}
+		}
+	`, s.Name(), cases)
+}
+
 func (s *unionField) unionTypeDef() string {
 	var unionFields string
 	for _, i := range s.itemType {
@@ -138,6 +155,7 @@ func (s *unionField) DeserializerMethod() string {
 func (s *unionField) AddStruct(p *generator.Package, containers bool) error {
 	p.AddStruct(s.filename(), s.unionEnumType(), s.unionEnumDef())
 	p.AddStruct(s.filename(), s.Name(), s.unionTypeDef())
+	p.AddFunction(s.filename(), s.Name(), "stringer", s.unionStringerMethodDef())
 	for _, f := range s.itemType {
 		err := f.AddStruct(p, containers)
 		if err != nil {
