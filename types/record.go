@@ -103,7 +103,11 @@ func (r *RecordDefinition) structFields() string {
 		if f.Doc() != "" {
 			fieldDefinitions += fmt.Sprintf("\n// %v\n", f.Doc())
 		}
-		fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), f.Type().GoType())
+		if ref, ok := f.avroType.(*Reference); ok && ref.AvroName().Namespace != r.AvroName().Namespace {
+			fieldDefinitions += fmt.Sprintf("%v %v.%v\n", f.GoName(), ref.AvroName().Namespace, f.Type().GoType())
+		} else {
+			fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), f.Type().GoType())
+		}
 	}
 	return fieldDefinitions
 }
@@ -200,6 +204,14 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 		constructorMethodDef, err := r.ConstructorMethodDef()
 		if err != nil {
 			return err
+		}
+
+		for _, f := range r.fields {
+			ref, ok := f.avroType.(*Reference)
+			if !ok || ref.AvroName().Namespace == r.AvroName().Namespace {
+				continue
+			}
+			p.AddImport(r.filename(), fmt.Sprintf("apollo/event/%v", ref.AvroName().Namespace))
 		}
 
 		qnDef, err := r.qualifiedNameMethodDef()

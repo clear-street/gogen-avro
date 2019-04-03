@@ -15,6 +15,10 @@ func NewPackage(name string) *Package {
 	return &Package{name: name, files: make(map[string]*File)}
 }
 
+func (p *Package) Name() string {
+	return p.name
+}
+
 func (p *Package) WriteFiles(targetDir string) error {
 	for _, f := range p.files {
 		err := f.WriteFile(p.name, filepath.Join(targetDir, f.name))

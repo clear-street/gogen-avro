@@ -22,12 +22,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: gogen-avro [--short-unions] [--package=<package name>] [--containers] <target directory> <schema files>\n")
 		os.Exit(1)
 	}
+	fmt.Println(packageName)
 
 	targetDir := flag.Arg(0)
 	files := flag.Args()[1:]
 
-	var err error
-	pkg := generator.NewPackage(*packageName)
+	//var err error
+	//pkg := generator.NewPackage(*packageName)
 	namespace := types.NewNamespace(*shortUnions)
 
 	for _, fileName := range files {
@@ -44,17 +45,51 @@ func main() {
 		}
 	}
 
-	err = namespace.AddToPackage(pkg, codegenComment(files), *containers)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error generating code for schema - %v\n", err)
-		os.Exit(4)
+	for _, v := range namespace.Schemas {
+		if err := v.Root.ResolveReferences(namespace); err != nil {
+			panic(err)
+		}
+
+		r := v.Root
+		fmt.Fprintf(os.Stderr, "%v\n", r.Name())
 	}
 
-	err = pkg.WriteFiles(targetDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", targetDir, err)
-		os.Exit(4)
+	pkgs := map[string]*generator.Package{}
+	for k, v := range namespace.Definitions {
+		fmt.Fprintf(os.Stderr, "%v\n", k)
+		pkg, ok := pkgs[k.Namespace]
+		if !ok {
+			pkg = generator.NewPackage(k.Namespace)
+			pkgs[k.Namespace] = pkg
+		}
+
+		v.AddStruct(pkg, *containers)
+		v.AddSerializer(pkg)
+		v.AddDeserializer(pkg)
 	}
+
+	for k, v := range pkgs {
+		path := targetDir + "/" + k
+		err := v.WriteFiles(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", path, err)
+			os.Exit(4)
+		}
+	}
+
+	/*
+		err = namespace.AddToPackage(pkg, codegenComment(files), *containers)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error generating code for schema - %v\n", err)
+			os.Exit(4)
+		}
+
+		err = pkg.WriteFiles(targetDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", targetDir, err)
+			os.Exit(4)
+		}
+	*/
 }
 
 // codegenComment generates a comment informing readers they are looking at

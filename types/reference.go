@@ -25,6 +25,10 @@ func (s *Reference) Name() string {
 	return s.def.Name()
 }
 
+func (s *Reference) AvroName() QualifiedName {
+	return s.typeName
+}
+
 func (s *Reference) GoType() string {
 	return s.def.GoType()
 }
