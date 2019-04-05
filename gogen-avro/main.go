@@ -62,12 +62,12 @@ func main() {
 		v.AddDeserializer(pkg)
 	}
 
-	if err := os.RemoveAll(filepath.Join(targetDir, *packageName)); err != nil {
-		panic(err)
-	}
-
 	for k, v := range pkgs {
-		path := filepath.Join(targetDir, imprt.Path(*packageName, k))
+		path := filepath.Join(targetDir, imprt.Pkg(*packageName, k))
+		if imprt.IsRootPkg(*packageName, k) {
+			path = targetDir
+		}
+
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			panic(err)
 		}

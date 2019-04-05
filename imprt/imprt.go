@@ -20,10 +20,16 @@ func Path(root, ns string) string {
 	return path
 }
 
+func IsRootPkg(root, ns string) bool {
+	ar := strings.Split(ns, ".")
+	return len(ar) <= 1
+}
+
 func Pkg(root, ns string) string {
 	ar := strings.Split(ns, ".")
+	br := strings.Split(root, "/")
 	if len(ar) <= 1 {
-		return root
+		return br[len(br)-1]
 	}
 
 	return ar[len(ar)-1]
