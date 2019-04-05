@@ -124,31 +124,31 @@ func (s *unionField) unionIdentityMethodDef(u AvroType) string {
 	`, s.Name(), u.Name(), s.unionEnumType()+u.Name())
 }
 
-func (s *unionField) unionSerializer() string {
+func (s *unionField) unionSerializer(p *generator.Package) string {
 	switchCase := ""
 	for _, t := range s.itemType {
-		switchCase += fmt.Sprintf("case %v:\nreturn %v(r.%v, w)\n", s.unionEnumType()+t.Name(), t.SerializerMethod(), t.Name())
+		switchCase += fmt.Sprintf("case %v:\nreturn %v(r.%v, w)\n", s.unionEnumType()+t.Name(), t.SerializerMethod(p), t.Name())
 	}
-	return fmt.Sprintf(unionSerializerTemplate, s.SerializerMethod(), s.GoType(), switchCase, s.GoType())
+	return fmt.Sprintf(unionSerializerTemplate, s.SerializerMethod(p), s.GoType(), switchCase, s.GoType())
 }
 
-func (s *unionField) unionDeserializer() string {
+func (s *unionField) unionDeserializer(p *generator.Package) string {
 	switchCase := ""
 	for _, t := range s.itemType {
-		switchCase += fmt.Sprintf("case %v:\nval, err :=  %v(r)\nif err != nil {return unionStr, err}\nunionStr.%v = val\n", s.unionEnumType()+t.Name(), t.DeserializerMethod(), t.Name())
+		switchCase += fmt.Sprintf("case %v:\nval, err :=  %v(r)\nif err != nil {return unionStr, err}\nunionStr.%v = val\n", s.unionEnumType()+t.Name(), t.DeserializerMethod(p), t.Name())
 	}
-	return fmt.Sprintf(unionDeserializerTemplate, s.DeserializerMethod(), s.GoType(), s.GoType(), s.unionEnumType(), switchCase, s.GoType())
+	return fmt.Sprintf(unionDeserializerTemplate, s.DeserializerMethod(p), s.GoType(), s.GoType(), s.unionEnumType(), switchCase, s.GoType())
 }
 
 func (s *unionField) filename() string {
 	return generator.ToSnake(s.GoType()) + ".go"
 }
 
-func (s *unionField) SerializerMethod() string {
+func (s *unionField) SerializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("write%v", s.Name())
 }
 
-func (s *unionField) DeserializerMethod() string {
+func (s *unionField) DeserializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("read%v", s.Name())
 }
 
@@ -171,7 +171,7 @@ func (s *unionField) AddStruct(p *generator.Package, containers bool) error {
 
 func (s *unionField) AddSerializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "fmt")
-	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(), s.unionSerializer())
+	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(p), s.unionSerializer(p))
 	p.AddStruct(UTIL_FILE, "ByteWriter", byteWriterInterface)
 	p.AddFunction(UTIL_FILE, "", "writeLong", writeLongMethod)
 	p.AddFunction(UTIL_FILE, "", "encodeInt", encodeIntMethod)
@@ -183,7 +183,7 @@ func (s *unionField) AddSerializer(p *generator.Package) {
 
 func (s *unionField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "fmt")
-	p.AddFunction(UTIL_FILE, "", s.DeserializerMethod(), s.unionDeserializer())
+	p.AddFunction(UTIL_FILE, "", s.DeserializerMethod(p), s.unionDeserializer(p))
 	p.AddFunction(UTIL_FILE, "", "readLong", readLongMethod)
 	p.AddImport(UTIL_FILE, "io")
 	for _, f := range s.itemType {

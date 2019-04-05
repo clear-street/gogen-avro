@@ -74,11 +74,11 @@ func (s *arrayField) GoType() string {
 	return fmt.Sprintf("[]%v", s.itemType.GoType())
 }
 
-func (s *arrayField) SerializerMethod() string {
+func (s *arrayField) SerializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("write%v", s.Name())
 }
 
-func (s *arrayField) DeserializerMethod() string {
+func (s *arrayField) DeserializerMethod(*generator.Package) string {
 	return fmt.Sprintf("read%v", s.Name())
 }
 
@@ -87,9 +87,9 @@ func (s *arrayField) AddStruct(p *generator.Package, container bool) error {
 }
 
 func (s *arrayField) AddSerializer(p *generator.Package) {
-	itemMethodName := s.itemType.SerializerMethod()
-	methodName := s.SerializerMethod()
-	arraySerializer := fmt.Sprintf(arraySerializerTemplate, s.SerializerMethod(), s.GoType(), itemMethodName)
+	itemMethodName := s.itemType.SerializerMethod(p)
+	methodName := s.SerializerMethod(p)
+	arraySerializer := fmt.Sprintf(arraySerializerTemplate, s.SerializerMethod(p), s.GoType(), itemMethodName)
 	s.itemType.AddSerializer(p)
 	p.AddFunction(UTIL_FILE, "", methodName, arraySerializer)
 	p.AddFunction(UTIL_FILE, "", "writeLong", writeLongMethod)
@@ -99,8 +99,8 @@ func (s *arrayField) AddSerializer(p *generator.Package) {
 }
 
 func (s *arrayField) AddDeserializer(p *generator.Package) {
-	itemMethodName := s.itemType.DeserializerMethod()
-	methodName := s.DeserializerMethod()
+	itemMethodName := s.itemType.DeserializerMethod(p)
+	methodName := s.DeserializerMethod(p)
 	arrayDeserializer := fmt.Sprintf(arrayDeserializerTemplate, methodName, s.GoType(), s.GoType(), itemMethodName)
 	s.itemType.AddDeserializer(p)
 	p.AddFunction(UTIL_FILE, "", methodName, arrayDeserializer)

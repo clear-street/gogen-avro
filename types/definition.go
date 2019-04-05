@@ -17,8 +17,8 @@ type Definition interface {
 
 	GoType() string
 
-	SerializerMethod() string
-	DeserializerMethod() string
+	SerializerMethod(*generator.Package) string
+	DeserializerMethod(*generator.Package) string
 
 	// Add the imports and struct for the definition of this type to the generator.Package
 	AddStruct(*generator.Package, bool) error

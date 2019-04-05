@@ -80,11 +80,11 @@ func (s *mapField) GoType() string {
 	return fmt.Sprintf("map[string]%v", s.itemType.GoType())
 }
 
-func (s *mapField) SerializerMethod() string {
+func (s *mapField) SerializerMethod(*generator.Package) string {
 	return fmt.Sprintf("write%v", s.Name())
 }
 
-func (s *mapField) DeserializerMethod() string {
+func (s *mapField) DeserializerMethod(*generator.Package) string {
 	return fmt.Sprintf("read%v", s.Name())
 }
 
@@ -94,9 +94,9 @@ func (s *mapField) AddStruct(p *generator.Package, containers bool) error {
 
 func (s *mapField) AddSerializer(p *generator.Package) {
 	s.itemType.AddSerializer(p)
-	itemMethodName := s.itemType.SerializerMethod()
-	methodName := s.SerializerMethod()
-	mapSerializer := fmt.Sprintf(mapSerializerTemplate, s.SerializerMethod(), s.GoType(), itemMethodName)
+	itemMethodName := s.itemType.SerializerMethod(p)
+	methodName := s.SerializerMethod(p)
+	mapSerializer := fmt.Sprintf(mapSerializerTemplate, s.SerializerMethod(p), s.GoType(), itemMethodName)
 
 	p.AddStruct(UTIL_FILE, "ByteWriter", byteWriterInterface)
 	p.AddStruct(UTIL_FILE, "StringWriter", stringWriterInterface)
@@ -109,9 +109,9 @@ func (s *mapField) AddSerializer(p *generator.Package) {
 
 func (s *mapField) AddDeserializer(p *generator.Package) {
 	s.itemType.AddDeserializer(p)
-	itemMethodName := s.itemType.DeserializerMethod()
-	methodName := s.DeserializerMethod()
-	mapDeserializer := fmt.Sprintf(mapDeserializerTemplate, s.DeserializerMethod(), s.GoType(), s.GoType(), itemMethodName)
+	itemMethodName := s.itemType.DeserializerMethod(p)
+	methodName := s.DeserializerMethod(p)
+	mapDeserializer := fmt.Sprintf(mapDeserializerTemplate, s.DeserializerMethod(p), s.GoType(), s.GoType(), itemMethodName)
 
 	p.AddFunction(UTIL_FILE, "", "readLong", readLongMethod)
 	p.AddFunction(UTIL_FILE, "", "readString", readStringMethod)

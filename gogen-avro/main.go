@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/clear-street/gogen-avro/generator"
+	"github.com/clear-street/gogen-avro/imprt"
 	"github.com/clear-street/gogen-avro/types"
 )
 
@@ -59,7 +60,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", k)
 		pkg, ok := pkgs[k.Namespace]
 		if !ok {
-			pkg = generator.NewPackage(k.Namespace)
+			pkg = generator.NewPackage(*packageName, k.Namespace)
 			pkgs[k.Namespace] = pkg
 		}
 
@@ -69,7 +70,13 @@ func main() {
 	}
 
 	for k, v := range pkgs {
-		path := targetDir + "/" + k
+		path := filepath.Join(targetDir, imprt.Path(*packageName, k))
+		if err := os.RemoveAll(path); err != nil {
+			panic(err)
+		}
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			panic(err)
+		}
 		err := v.WriteFiles(path)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", path, err)

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/clear-street/gogen-avro/generator"
+	"github.com/clear-street/gogen-avro/imprt"
 )
 
 const enumTypeDef = `
@@ -121,20 +122,29 @@ func (e *EnumDefinition) parserDef() string {
 	return fmt.Sprintf(enumTypeParser, e.GoType(), e.GoType(), e.parserList())
 }
 
-func (e *EnumDefinition) serializerMethodDef() string {
-	return fmt.Sprintf(enumSerializerDef, e.SerializerMethod(), e.GoType())
+func (e *EnumDefinition) serializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(enumSerializerDef, e.SerializerMethod(p), e.GoType())
 }
 
-func (e *EnumDefinition) SerializerMethod() string {
-	return "write" + e.GoType()
+func (e *EnumDefinition) SerializerMethod(p *generator.Package) string {
+	if p.Name() != e.AvroName().Namespace {
+		pkg := imprt.Pkg(p.Root(), e.AvroName().Namespace)
+		return fmt.Sprintf("%s.Write%s", pkg, e.GoType())
+	}
+	return "Write" + e.GoType()
 }
 
-func (e *EnumDefinition) deserializerMethodDef() string {
-	return fmt.Sprintf(enumDeserializerDef, e.DeserializerMethod(), e.GoType(), e.GoType())
+func (e *EnumDefinition) deserializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(enumDeserializerDef, e.DeserializerMethod(p), e.GoType(), e.GoType())
 }
 
-func (e *EnumDefinition) DeserializerMethod() string {
-	return "read" + e.GoType()
+func (e *EnumDefinition) DeserializerMethod(p *generator.Package) string {
+	if p.Name() != e.AvroName().Namespace {
+		pkg := imprt.Pkg(p.Root(), e.AvroName().Namespace)
+		return fmt.Sprintf("%s.Read%s", pkg, e.GoType())
+	}
+
+	return "Read" + e.GoType()
 }
 
 func (e *EnumDefinition) filename() string {
@@ -153,16 +163,26 @@ func (e *EnumDefinition) AddStruct(p *generator.Package, _ bool) error {
 }
 
 func (e *EnumDefinition) AddSerializer(p *generator.Package) {
+	if p.Name() != e.AvroName().Namespace {
+		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), e.AvroName().Namespace))
+		return
+	}
+
 	p.AddStruct(UTIL_FILE, "ByteWriter", byteWriterInterface)
 	p.AddFunction(UTIL_FILE, "", "writeInt", writeIntMethod)
 	p.AddFunction(UTIL_FILE, "", "encodeInt", encodeIntMethod)
-	p.AddFunction(UTIL_FILE, "", e.SerializerMethod(), e.serializerMethodDef())
+	p.AddFunction(UTIL_FILE, "", e.SerializerMethod(p), e.serializerMethodDef(p))
 	p.AddImport(UTIL_FILE, "io")
 }
 
 func (e *EnumDefinition) AddDeserializer(p *generator.Package) {
+	if p.Name() != e.AvroName().Namespace {
+		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), e.AvroName().Namespace))
+		return
+	}
+
 	p.AddFunction(UTIL_FILE, "", "readInt", readIntMethod)
-	p.AddFunction(UTIL_FILE, "", e.DeserializerMethod(), e.deserializerMethodDef())
+	p.AddFunction(UTIL_FILE, "", e.DeserializerMethod(p), e.deserializerMethodDef(p))
 	p.AddImport(UTIL_FILE, "io")
 }
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/clear-street/gogen-avro/generator"
+	"github.com/clear-street/gogen-avro/imprt"
 )
 
 const recordStructDefTemplate = `
@@ -97,14 +98,15 @@ func (r *RecordDefinition) Aliases() []QualifiedName {
 	return r.aliases
 }
 
-func (r *RecordDefinition) structFields() string {
+func (r *RecordDefinition) structFields(p *generator.Package) string {
 	var fieldDefinitions string
 	for _, f := range r.fields {
 		if f.Doc() != "" {
 			fieldDefinitions += fmt.Sprintf("\n// %v\n", f.Doc())
 		}
 		if ref, ok := f.avroType.(*Reference); ok && ref.AvroName().Namespace != r.AvroName().Namespace {
-			fieldDefinitions += fmt.Sprintf("%v %v.%v\n", f.GoName(), ref.AvroName().Namespace, f.Type().GoType())
+			pkg := imprt.Pkg(p.Root(), ref.AvroName().Namespace)
+			fieldDefinitions += fmt.Sprintf("%v %v.%v\n", f.GoName(), pkg, f.Type().GoType())
 		} else {
 			fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), f.Type().GoType())
 		}
@@ -112,43 +114,43 @@ func (r *RecordDefinition) structFields() string {
 	return fieldDefinitions
 }
 
-func (r *RecordDefinition) fieldSerializers() string {
+func (r *RecordDefinition) fieldSerializers(p *generator.Package) string {
 	serializerMethods := "var err error\n"
 	for _, f := range r.fields {
-		serializerMethods += fmt.Sprintf("err = %v(r.%v, w)\nif err != nil {return err}\n", f.Type().SerializerMethod(), f.GoName())
+		serializerMethods += fmt.Sprintf("err = %v(r.%v, w)\nif err != nil {return err}\n", f.Type().SerializerMethod(p), f.GoName())
 	}
 	return serializerMethods
 }
 
-func (r *RecordDefinition) fieldDeserializers() string {
+func (r *RecordDefinition) fieldDeserializers(p *generator.Package) string {
 	deserializerMethods := ""
 	for _, f := range r.fields {
-		deserializerMethods += fmt.Sprintf("str.%v, err = %v(r)\nif err != nil {return nil, err}\n", f.GoName(), f.Type().DeserializerMethod())
+		deserializerMethods += fmt.Sprintf("str.%v, err = %v(r)\nif err != nil {return nil, err}\n", f.GoName(), f.Type().DeserializerMethod(p))
 	}
 	return deserializerMethods
 }
 
-func (r *RecordDefinition) structDefinition() string {
+func (r *RecordDefinition) structDefinition(p *generator.Package) string {
 	var doc string
 	if r.doc != "" {
 		doc = fmt.Sprintf("// %v", r.doc)
 	}
-	return fmt.Sprintf(recordStructDefTemplate, doc, r.Name(), r.structFields())
+	return fmt.Sprintf(recordStructDefTemplate, doc, r.Name(), r.structFields(p))
 }
 
-func (r *RecordDefinition) serializerMethodDef() string {
-	return fmt.Sprintf("func %v(r %v, w io.Writer) error {\n%v\nreturn nil\n}", r.SerializerMethod(), r.GoType(), r.fieldSerializers())
+func (r *RecordDefinition) serializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf("func %v(r %v, w io.Writer) error {\n%v\nreturn nil\n}", r.SerializerMethod(p), r.GoType(), r.fieldSerializers(p))
 }
 
-func (r *RecordDefinition) deserializerMethodDef() string {
-	return fmt.Sprintf(recordStructDeserializerTemplate, r.DeserializerMethod(), r.GoType(), r.Name(), r.fieldDeserializers())
+func (r *RecordDefinition) deserializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(recordStructDeserializerTemplate, r.DeserializerMethod(p), r.GoType(), r.Name(), r.fieldDeserializers(p))
 }
 
-func (r *RecordDefinition) SerializerMethod() string {
+func (r *RecordDefinition) SerializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("write%v", r.Name())
 }
 
-func (r *RecordDefinition) DeserializerMethod() string {
+func (r *RecordDefinition) DeserializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("read%v", r.Name())
 }
 
@@ -164,12 +166,12 @@ func (r *RecordDefinition) recordWriterMethodDef() string {
 	return fmt.Sprintf(recordWriterTemplate, r.recordWriterMethod(), r.Name())
 }
 
-func (r *RecordDefinition) publicSerializerMethodDef() string {
-	return fmt.Sprintf(recordStructPublicSerializerTemplate, r.GoType(), r.SerializerMethod())
+func (r *RecordDefinition) publicSerializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(recordStructPublicSerializerTemplate, r.GoType(), r.SerializerMethod(p))
 }
 
-func (r *RecordDefinition) publicDeserializerMethodDef() string {
-	return fmt.Sprintf(recordStructPublicDeserializerTemplate, r.publicDeserializerMethod(), r.GoType(), r.DeserializerMethod())
+func (r *RecordDefinition) publicDeserializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(recordStructPublicDeserializerTemplate, r.publicDeserializerMethod(), r.GoType(), r.DeserializerMethod(p))
 }
 
 func (r *RecordDefinition) filename() string {
@@ -194,7 +196,7 @@ func (r *RecordDefinition) qualifiedNameMethodDef() (string, error) {
 func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) error {
 	// Import guard, to avoid circular dependencies
 	if !p.HasStruct(r.filename(), r.GoType()) {
-		p.AddStruct(r.filename(), r.GoType(), r.structDefinition())
+		p.AddStruct(r.filename(), r.GoType(), r.structDefinition(p))
 		schemaDef, err := r.schemaMethodDef()
 		if err != nil {
 			return err
@@ -211,7 +213,7 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 			if !ok || ref.AvroName().Namespace == r.AvroName().Namespace {
 				continue
 			}
-			p.AddImport(r.filename(), fmt.Sprintf("apollo/event/%v", ref.AvroName().Namespace))
+			p.AddImport(r.filename(), imprt.Path(p.Root(), ref.AvroName().Namespace))
 		}
 
 		qnDef, err := r.qualifiedNameMethodDef()
@@ -236,10 +238,10 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 
 func (r *RecordDefinition) AddSerializer(p *generator.Package) {
 	// Import guard, to avoid circular dependencies
-	if !p.HasFunction(UTIL_FILE, "", r.SerializerMethod()) {
+	if !p.HasFunction(UTIL_FILE, "", r.SerializerMethod(p)) {
 		p.AddImport(r.filename(), "io")
-		p.AddFunction(UTIL_FILE, "", r.SerializerMethod(), r.serializerMethodDef())
-		p.AddFunction(r.filename(), r.GoType(), "Serialize", r.publicSerializerMethodDef())
+		p.AddFunction(UTIL_FILE, "", r.SerializerMethod(p), r.serializerMethodDef(p))
+		p.AddFunction(r.filename(), r.GoType(), "Serialize", r.publicSerializerMethodDef(p))
 		for _, f := range r.fields {
 			f.Type().AddSerializer(p)
 		}
@@ -248,10 +250,10 @@ func (r *RecordDefinition) AddSerializer(p *generator.Package) {
 
 func (r *RecordDefinition) AddDeserializer(p *generator.Package) {
 	// Import guard, to avoid circular dependencies
-	if !p.HasFunction(UTIL_FILE, "", r.DeserializerMethod()) {
+	if !p.HasFunction(UTIL_FILE, "", r.DeserializerMethod(p)) {
 		p.AddImport(r.filename(), "io")
-		p.AddFunction(UTIL_FILE, "", r.DeserializerMethod(), r.deserializerMethodDef())
-		p.AddFunction(r.filename(), "", r.publicDeserializerMethod(), r.publicDeserializerMethodDef())
+		p.AddFunction(UTIL_FILE, "", r.DeserializerMethod(p), r.deserializerMethodDef(p))
+		p.AddFunction(r.filename(), "", r.publicDeserializerMethod(), r.publicDeserializerMethodDef(p))
 		for _, f := range r.fields {
 			f.Type().AddDeserializer(p)
 		}

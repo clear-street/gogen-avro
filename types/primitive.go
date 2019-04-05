@@ -21,11 +21,11 @@ func (s *primitiveField) GoType() string {
 	return s.goType
 }
 
-func (s *primitiveField) SerializerMethod() string {
+func (s *primitiveField) SerializerMethod(p *generator.Package) string {
 	return s.serializerMethod
 }
 
-func (s *primitiveField) DeserializerMethod() string {
+func (s *primitiveField) DeserializerMethod(p *generator.Package) string {
 	return s.deserializerMethod
 }
 

@@ -3,16 +3,23 @@ package generator
 import (
 	"path/filepath"
 	"sort"
+
+	"github.com/clear-street/gogen-avro/imprt"
 )
 
 // Package represents the output package
 type Package struct {
+	root  string
 	name  string
 	files map[string]*File
 }
 
-func NewPackage(name string) *Package {
-	return &Package{name: name, files: make(map[string]*File)}
+func NewPackage(root, name string) *Package {
+	return &Package{root: root, name: name, files: make(map[string]*File)}
+}
+
+func (p *Package) Root() string {
+	return p.root
 }
 
 func (p *Package) Name() string {
@@ -21,7 +28,7 @@ func (p *Package) Name() string {
 
 func (p *Package) WriteFiles(targetDir string) error {
 	for _, f := range p.files {
-		err := f.WriteFile(p.name, filepath.Join(targetDir, f.name))
+		err := f.WriteFile(imprt.Pkg(p.root, p.name), filepath.Join(targetDir, f.name))
 		if err != nil {
 			return err
 		}

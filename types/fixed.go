@@ -53,12 +53,12 @@ func (s *FixedDefinition) GoType() string {
 	return generator.ToPublicName(s.name.Name)
 }
 
-func (s *FixedDefinition) serializerMethodDef() string {
-	return fmt.Sprintf(writeFixedMethod, s.SerializerMethod(), s.GoType())
+func (s *FixedDefinition) serializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(writeFixedMethod, s.SerializerMethod(p), s.GoType())
 }
 
-func (s *FixedDefinition) deserializerMethodDef() string {
-	return fmt.Sprintf(readFixedMethod, s.DeserializerMethod(), s.GoType(), s.GoType())
+func (s *FixedDefinition) deserializerMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(readFixedMethod, s.DeserializerMethod(p), s.GoType(), s.GoType())
 }
 
 func (s *FixedDefinition) typeDef() string {
@@ -69,11 +69,11 @@ func (s *FixedDefinition) filename() string {
 	return generator.ToSnake(s.GoType()) + ".go"
 }
 
-func (s *FixedDefinition) SerializerMethod() string {
+func (s *FixedDefinition) SerializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("write%v", s.GoType())
 }
 
-func (s *FixedDefinition) DeserializerMethod() string {
+func (s *FixedDefinition) DeserializerMethod(*generator.Package) string {
 	return fmt.Sprintf("read%v", s.GoType())
 }
 
@@ -83,12 +83,12 @@ func (s *FixedDefinition) AddStruct(p *generator.Package, _ bool) error {
 }
 
 func (s *FixedDefinition) AddSerializer(p *generator.Package) {
-	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(), s.serializerMethodDef())
+	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(p), s.serializerMethodDef(p))
 	p.AddImport(UTIL_FILE, "io")
 }
 
 func (s *FixedDefinition) AddDeserializer(p *generator.Package) {
-	p.AddFunction(UTIL_FILE, "", s.DeserializerMethod(), s.deserializerMethodDef())
+	p.AddFunction(UTIL_FILE, "", s.DeserializerMethod(p), s.deserializerMethodDef(p))
 	p.AddImport(UTIL_FILE, "io")
 }
 

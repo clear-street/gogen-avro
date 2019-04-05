@@ -33,12 +33,12 @@ func (s *Reference) GoType() string {
 	return s.def.GoType()
 }
 
-func (s *Reference) SerializerMethod() string {
-	return s.def.SerializerMethod()
+func (s *Reference) SerializerMethod(p *generator.Package) string {
+	return s.def.SerializerMethod(p)
 }
 
-func (s *Reference) DeserializerMethod() string {
-	return s.def.DeserializerMethod()
+func (s *Reference) DeserializerMethod(p *generator.Package) string {
+	return s.def.DeserializerMethod(p)
 }
 
 func (s *Reference) AddStruct(p *generator.Package, containers bool) error {

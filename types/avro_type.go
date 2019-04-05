@@ -9,9 +9,9 @@ type AvroType interface {
 	GoType() string
 
 	// The name of the method which writes this field onto the wire
-	SerializerMethod() string
+	SerializerMethod(*generator.Package) string
 	// The name of the method which reads this field off the wire
-	DeserializerMethod() string
+	DeserializerMethod(*generator.Package) string
 
 	// Add the imports and struct for the definition of this type to the generator.Package
 	AddStruct(*generator.Package, bool) error
