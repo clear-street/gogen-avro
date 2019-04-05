@@ -14,22 +14,19 @@ import (
 )
 
 func main() {
-	packageName := flag.String("package", "avro", "Name of generated package")
+	packageName := flag.String("package", "avro", "Root package")
 	containers := flag.Bool("containers", false, "Whether to generate container writer methods")
 	shortUnions := flag.Bool("short-unions", false, "Whether to use shorter names for Union types")
 
 	flag.Parse()
 	if flag.NArg() < 2 {
-		fmt.Fprintf(os.Stderr, "Usage: gogen-avro [--short-unions] [--package=<package name>] [--containers] <target directory> <schema files>\n")
+		fmt.Fprintf(os.Stderr, "Usage: gogen-avro [--short-unions] [--package=<root package>] [--containers] <target directory> <schema files>\n")
 		os.Exit(1)
 	}
 	fmt.Println(packageName)
 
 	targetDir := flag.Arg(0)
 	files := flag.Args()[1:]
-
-	//var err error
-	//pkg := generator.NewPackage(*packageName)
 	namespace := types.NewNamespace(*shortUnions)
 
 	for _, fileName := range files {
@@ -50,14 +47,10 @@ func main() {
 		if err := v.Root.ResolveReferences(namespace); err != nil {
 			panic(err)
 		}
-
-		r := v.Root
-		fmt.Fprintf(os.Stderr, "%v\n", r.Name())
 	}
 
 	pkgs := map[string]*generator.Package{}
 	for k, v := range namespace.Definitions {
-		fmt.Fprintf(os.Stderr, "%v\n", k)
 		pkg, ok := pkgs[k.Namespace]
 		if !ok {
 			pkg = generator.NewPackage(*packageName, k.Namespace)
@@ -69,11 +62,12 @@ func main() {
 		v.AddDeserializer(pkg)
 	}
 
+	if err := os.RemoveAll(filepath.Join(targetDir, *packageName)); err != nil {
+		panic(err)
+	}
+
 	for k, v := range pkgs {
 		path := filepath.Join(targetDir, imprt.Path(*packageName, k))
-		if err := os.RemoveAll(path); err != nil {
-			panic(err)
-		}
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			panic(err)
 		}
@@ -83,20 +77,6 @@ func main() {
 			os.Exit(4)
 		}
 	}
-
-	/*
-		err = namespace.AddToPackage(pkg, codegenComment(files), *containers)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error generating code for schema - %v\n", err)
-			os.Exit(4)
-		}
-
-		err = pkg.WriteFiles(targetDir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", targetDir, err)
-			os.Exit(4)
-		}
-	*/
 }
 
 // codegenComment generates a comment informing readers they are looking at

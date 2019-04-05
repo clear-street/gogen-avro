@@ -1,6 +1,7 @@
 package imprt
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -26,4 +27,17 @@ func Pkg(root, ns string) string {
 	}
 
 	return ar[len(ar)-1]
+}
+
+func Type(root, ns, typename string) string {
+	pkg := Pkg(root, ns)
+	if typename[0] == '*' {
+		return fmt.Sprintf("*%v.%v", pkg, typename[1:])
+	}
+	return fmt.Sprintf("%v.%v", pkg, typename)
+}
+
+func UniqName(root, ns, name string) string {
+	pkg := Pkg(root, ns)
+	return fmt.Sprintf("%v%v", strings.Title(pkg), name)
 }

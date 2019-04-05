@@ -104,9 +104,10 @@ func (r *RecordDefinition) structFields(p *generator.Package) string {
 		if f.Doc() != "" {
 			fieldDefinitions += fmt.Sprintf("\n// %v\n", f.Doc())
 		}
+
 		if ref, ok := f.avroType.(*Reference); ok && ref.AvroName().Namespace != r.AvroName().Namespace {
-			pkg := imprt.Pkg(p.Root(), ref.AvroName().Namespace)
-			fieldDefinitions += fmt.Sprintf("%v %v.%v\n", f.GoName(), pkg, f.Type().GoType())
+			t := imprt.Type(p.Root(), ref.AvroName().Namespace, f.Type().GoType())
+			fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), t)
 		} else {
 			fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), f.Type().GoType())
 		}
@@ -147,11 +148,21 @@ func (r *RecordDefinition) deserializerMethodDef(p *generator.Package) string {
 }
 
 func (r *RecordDefinition) SerializerMethod(p *generator.Package) string {
-	return fmt.Sprintf("write%v", r.Name())
+	if p.Name() != r.AvroName().Namespace {
+		pkg := imprt.Pkg(p.Root(), r.AvroName().Namespace)
+		return fmt.Sprintf("%s.Write%s", pkg, r.Name())
+	}
+
+	return fmt.Sprintf("Write%v", r.Name())
 }
 
 func (r *RecordDefinition) DeserializerMethod(p *generator.Package) string {
-	return fmt.Sprintf("read%v", r.Name())
+	if p.Name() != r.AvroName().Namespace {
+		pkg := imprt.Pkg(p.Root(), r.AvroName().Namespace)
+		return fmt.Sprintf("%s.Read%s", pkg, r.Name())
+	}
+
+	return fmt.Sprintf("Read%v", r.Name())
 }
 
 func (r *RecordDefinition) publicDeserializerMethod() string {
@@ -194,6 +205,10 @@ func (r *RecordDefinition) qualifiedNameMethodDef() (string, error) {
 }
 
 func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) error {
+	if p.Name() != r.AvroName().Namespace {
+		return nil
+	}
+
 	// Import guard, to avoid circular dependencies
 	if !p.HasStruct(r.filename(), r.GoType()) {
 		p.AddStruct(r.filename(), r.GoType(), r.structDefinition(p))
@@ -237,6 +252,11 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 }
 
 func (r *RecordDefinition) AddSerializer(p *generator.Package) {
+	if p.Name() != r.AvroName().Namespace {
+		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), r.AvroName().Namespace))
+		return
+	}
+
 	// Import guard, to avoid circular dependencies
 	if !p.HasFunction(UTIL_FILE, "", r.SerializerMethod(p)) {
 		p.AddImport(r.filename(), "io")
@@ -249,6 +269,11 @@ func (r *RecordDefinition) AddSerializer(p *generator.Package) {
 }
 
 func (r *RecordDefinition) AddDeserializer(p *generator.Package) {
+	if p.Name() != r.AvroName().Namespace {
+		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), r.AvroName().Namespace))
+		return
+	}
+
 	// Import guard, to avoid circular dependencies
 	if !p.HasFunction(UTIL_FILE, "", r.DeserializerMethod(p)) {
 		p.AddImport(r.filename(), "io")

@@ -16,4 +16,10 @@ func TestImprt(t *testing.T) {
 	require.Equal(t, "b", imprt.Pkg("x", "a.b"))
 	require.Equal(t, "c", imprt.Pkg("x", "a.b.c"))
 	require.Equal(t, "e", imprt.Pkg("x", "a.b.c.c.e"))
+
+	require.Equal(t, "x.Type", imprt.Type("x", "a", "Type"))
+	require.Equal(t, "*x.Type", imprt.Type("x", "a", "*Type"))
+
+	require.Equal(t, "XFoo", imprt.UniqName("x", "a", "Foo"))
+	require.Equal(t, "CFoo", imprt.UniqName("x", "a.b.c", "Foo"))
 }

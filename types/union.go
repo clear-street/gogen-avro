@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/clear-street/gogen-avro/generator"
+	"github.com/clear-street/gogen-avro/imprt"
 )
 
 const unionSerializerTemplate = `
@@ -70,21 +71,31 @@ func (s *unionField) GoType() string {
 }
 
 func (s *unionField) unionEnumType() string {
-	return fmt.Sprintf("%vTypeEnum", s.Name())
+	return fmt.Sprintf("%vType", s.Name())
 }
 
-func (s *unionField) unionEnumDef() string {
+func (s *unionField) unionEnumDef(p *generator.Package) string {
 	var unionTypes string
 	for i, item := range s.itemType {
-		unionTypes += fmt.Sprintf("%v %v = %v\n", s.unionEnumType()+item.Name(), s.unionEnumType(), i)
+		if ref, ok := item.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			name := imprt.UniqName(p.Root(), ref.AvroName().Namespace, item.Name())
+			unionTypes += fmt.Sprintf("%v %v = %v\n", s.unionEnumType()+name, s.unionEnumType(), i)
+		} else {
+			unionTypes += fmt.Sprintf("%v %v = %v\n", s.unionEnumType()+item.Name(), s.unionEnumType(), i)
+		}
 	}
 	return fmt.Sprintf("type %v int\nconst(\n%v)\n", s.unionEnumType(), unionTypes)
 }
 
-func (s *unionField) unionStringerMethodDef() string {
+func (s *unionField) unionStringerMethodDef(p *generator.Package) string {
 	var cases string
 	for _, item := range s.itemType {
-		cases += fmt.Sprintf("case %v:\nreturn %q\n", s.unionEnumType()+item.Name(), item.Name())
+		name := item.Name()
+		if ref, ok := item.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			name = imprt.UniqName(p.Root(), ref.AvroName().Namespace, name)
+		}
+
+		cases += fmt.Sprintf("case %v:\nreturn %q\n", s.unionEnumType()+name, name)
 	}
 
 	return fmt.Sprintf(`
@@ -98,36 +109,56 @@ func (s *unionField) unionStringerMethodDef() string {
 	`, s.Name(), cases)
 }
 
-func (s *unionField) unionTypeDef() string {
+func (s *unionField) unionTypeDef(p *generator.Package) string {
 	var unionFields string
 	for _, i := range s.itemType {
-		unionFields += fmt.Sprintf("%v %v\n", i.Name(), i.GoType())
+		if ref, ok := i.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			unionFields += fmt.Sprintf("%v %v\n", imprt.UniqName(p.Root(), ref.AvroName().Namespace, i.Name()), imprt.Type(p.Root(), ref.AvroName().Namespace, i.GoType()))
+		} else {
+			unionFields += fmt.Sprintf("%v %v\n", i.Name(), i.GoType())
+		}
 	}
 	unionFields += fmt.Sprintf("UnionType %v", s.unionEnumType())
 	return fmt.Sprintf("type %v struct{\n%v\n}\n", s.Name(), unionFields)
 }
 
-func (s *unionField) unionSetMethodDef(u AvroType) string {
+func (s *unionField) unionSetMethodDef(p *generator.Package, u AvroType) string {
+	t := u.GoType()
+	n := u.Name()
+	if ref, ok := u.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+		t = imprt.Type(p.Root(), ref.AvroName().Namespace, t)
+		n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
+	}
+
 	return fmt.Sprintf(`
 		func (u *%v) Set%v(val %v) {
 			u.%v = val
 			u.UnionType = %v
 		}
-	`, s.Name(), u.Name(), u.GoType(), u.Name(), s.unionEnumType()+u.Name())
+	`, s.Name(), n, t, n, s.unionEnumType()+n)
 }
 
-func (s *unionField) unionIdentityMethodDef(u AvroType) string {
+func (s *unionField) unionIdentityMethodDef(p *generator.Package, u AvroType) string {
+	n := u.Name()
+	if ref, ok := u.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+		n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
+	}
+
 	return fmt.Sprintf(`
 		func (u *%v) Is%v() bool {
 			return u.UnionType == %v
 		}
-	`, s.Name(), u.Name(), s.unionEnumType()+u.Name())
+	`, s.Name(), n, s.unionEnumType()+n)
 }
 
 func (s *unionField) unionSerializer(p *generator.Package) string {
 	switchCase := ""
 	for _, t := range s.itemType {
-		switchCase += fmt.Sprintf("case %v:\nreturn %v(r.%v, w)\n", s.unionEnumType()+t.Name(), t.SerializerMethod(p), t.Name())
+		n := t.Name()
+		if ref, ok := t.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
+		}
+		switchCase += fmt.Sprintf("case %v:\nreturn %v(r.%v, w)\n", s.unionEnumType()+n, t.SerializerMethod(p), n)
 	}
 	return fmt.Sprintf(unionSerializerTemplate, s.SerializerMethod(p), s.GoType(), switchCase, s.GoType())
 }
@@ -153,9 +184,9 @@ func (s *unionField) DeserializerMethod(p *generator.Package) string {
 }
 
 func (s *unionField) AddStruct(p *generator.Package, containers bool) error {
-	p.AddStruct(s.filename(), s.unionEnumType(), s.unionEnumDef())
-	p.AddStruct(s.filename(), s.Name(), s.unionTypeDef())
-	p.AddFunction(s.filename(), s.Name(), "stringer", s.unionStringerMethodDef())
+	p.AddStruct(s.filename(), s.unionEnumType(), s.unionEnumDef(p))
+	p.AddStruct(s.filename(), s.Name(), s.unionTypeDef(p))
+	p.AddFunction(s.filename(), s.Name(), "stringer", s.unionStringerMethodDef(p))
 	for _, f := range s.itemType {
 		err := f.AddStruct(p, containers)
 		if err != nil {
@@ -163,9 +194,19 @@ func (s *unionField) AddStruct(p *generator.Package, containers bool) error {
 		}
 	}
 	for _, f := range s.itemType {
-		p.AddFunction(s.filename(), "set", f.Name(), s.unionSetMethodDef(f))
-		p.AddFunction(s.filename(), "identity", f.Name(), s.unionIdentityMethodDef(f))
+		set := s.unionSetMethodDef(p, f)
+		p.AddFunction(s.filename(), "set", set, set)
+
+		ident := s.unionIdentityMethodDef(p, f)
+		p.AddFunction(s.filename(), "identity", ident, ident)
 	}
+
+	for _, f := range s.itemType {
+		if ref, ok := f.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			p.AddImport(s.filename(), imprt.Path(p.Root(), ref.AvroName().Namespace))
+		}
+	}
+
 	return nil
 }
 
