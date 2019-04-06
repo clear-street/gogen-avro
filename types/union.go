@@ -166,7 +166,11 @@ func (s *unionField) unionSerializer(p *generator.Package) string {
 func (s *unionField) unionDeserializer(p *generator.Package) string {
 	switchCase := ""
 	for _, t := range s.itemType {
-		switchCase += fmt.Sprintf("case %v:\nval, err :=  %v(r)\nif err != nil {return unionStr, err}\nunionStr.%v = val\n", s.unionEnumType()+t.Name(), t.DeserializerMethod(p), t.Name())
+		n := t.Name()
+		if ref, ok := t.(*Reference); ok && ref.AvroName().Namespace != p.Name() {
+			n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
+		}
+		switchCase += fmt.Sprintf("case %v:\nval, err :=  %v(r)\nif err != nil {return unionStr, err}\nunionStr.%v = val\n", s.unionEnumType()+n, t.DeserializerMethod(p), n)
 	}
 	return fmt.Sprintf(unionDeserializerTemplate, s.DeserializerMethod(p), s.GoType(), s.GoType(), s.unionEnumType(), switchCase, s.GoType())
 }

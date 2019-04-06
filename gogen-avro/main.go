@@ -23,7 +23,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: gogen-avro [--short-unions] [--package=<root package>] [--containers] <target directory> <schema files>\n")
 		os.Exit(1)
 	}
-	fmt.Println(packageName)
 
 	targetDir := flag.Arg(0)
 	files := flag.Args()[1:]
