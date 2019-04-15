@@ -20,11 +20,6 @@ const recordSchemaTemplate = `func (r %v) Schema() string {
  return %v
 }
 `
-const recordName = `func (r %v) Name() string {
-	ns, n := r.QualifiedName()
-	return ns + "." + n
-}
-`
 const recordQualifiedName = `func (r %v) QualifiedName() (string, string) {
 	return %q, %q
 }
@@ -241,7 +236,9 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 		}
 
 		p.AddFunction(r.filename(), r.GoType(), "QualifiedName", qnDef)
-		p.AddFunction(r.filename(), r.GoType(), "Name", fmt.Sprintf(recordName, r.GoType()))
+		p.AddConstant(r.filename(), r.AvroName().Name+"QualifiedName", r.AvroName().String())
+		p.AddConstant(r.filename(), r.AvroName().Name+"Name", r.AvroName().Name)
+		p.AddConstant(r.filename(), r.AvroName().Name+"Namespace", r.AvroName().Namespace)
 
 		if containers {
 			p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/container")
