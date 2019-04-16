@@ -20,8 +20,8 @@ const recordSchemaTemplate = `func (r %v) Schema() string {
  return %v
 }
 `
-const recordQualifiedName = `func (r %v) QualifiedName() (string, string) {
-	return %q, %q
+const recordQualifiedName = `func (r %v) QualifiedName() string {
+	return %q + "." + %q
 }
 `
 
