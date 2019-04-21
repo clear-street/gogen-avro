@@ -67,7 +67,40 @@ func (namespace *Namespace) AddToPackage(p *generator.Package, headerComment str
 func (n *Namespace) RegisterDefinition(d Definition) error {
 	if curDef, ok := n.Definitions[d.AvroName()]; ok {
 		if !reflect.DeepEqual(curDef, d) {
-			return fmt.Errorf("Conflicting definitions for %v", d.AvroName())
+
+			//Ugly (and hopefully temporary) workaround for this: https://github.com/actgardner/gogen-avro/issues/34#issuecomment-485135439
+			enum1, ok1 := curDef.(*EnumDefinition)
+			enum2, ok2 := d.(*EnumDefinition)
+			if !ok1 || !ok2 {
+				return fmt.Errorf("Conflicting definitions for %v", d.AvroName())
+			}
+			emptyScope := make(map[QualifiedName]interface{})
+			def1, err := enum1.Definition(emptyScope)
+			if err != nil {
+				panic(err)
+			}
+			def2, err := enum2.Definition(emptyScope)
+			if err != nil {
+				panic(err)
+			}
+			map1, ok := def1.(map[string]interface{})
+			if !ok {
+				panic("failed to cast def1 to map")
+			}
+			map2, ok := def2.(map[string]interface{})
+			if !ok {
+				panic("failed to cast def2 to map")
+			}
+			if map1["namespace"] == nil && map2["namespace"] != nil {
+				map1["namespace"] = map2["namespace"]
+			} else if map1["namespace"] != nil && map2["namespace"] == nil {
+				map2["namespace"] = map1["namespace"]
+			} else {
+				return fmt.Errorf("Conflicting definitions for enum %v", d.AvroName())
+			}
+			if !reflect.DeepEqual(curDef, d) {
+				return fmt.Errorf("Enum %v has conflicting definitions", d.AvroName())
+			}
 		}
 	}
 	n.Definitions[d.AvroName()] = d
