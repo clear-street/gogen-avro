@@ -108,7 +108,7 @@ func (s *intField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "io")
 }
 
-func (s *intField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *intField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(float64); !ok {
 		return "", fmt.Errorf("Expected number as default for field %v, got %q", lvalue, rvalue)
 	}

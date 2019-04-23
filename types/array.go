@@ -122,11 +122,11 @@ func (s *arrayField) Definition(scope map[QualifiedName]interface{}) (interface{
 	return s.definition, nil
 }
 
-func (s *arrayField) ConstructorMethod() string {
+func (s *arrayField) ConstructorMethod(p *generator.Package) string {
 	return fmt.Sprintf("make(%v, 0)", s.GoType())
 }
 
-func (s *arrayField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *arrayField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	items, ok := rvalue.([]interface{})
 	if !ok {
 		return "", fmt.Errorf("Expected array as default for %v, got %v", lvalue, rvalue)
@@ -135,10 +135,10 @@ func (s *arrayField) DefaultValue(lvalue string, rvalue interface{}) (string, er
 	setters := fmt.Sprintf("%v = make(%v,%v)\n", lvalue, s.GoType(), len(items))
 	for i, item := range items {
 		if c, ok := getConstructableForType(s.itemType); ok {
-			setters += fmt.Sprintf("%v[%v] = %v\n", lvalue, i, c.ConstructorMethod())
+			setters += fmt.Sprintf("%v[%v] = %v\n", lvalue, i, c.ConstructorMethod(p))
 		}
 
-		setter, err := s.itemType.DefaultValue(fmt.Sprintf("%v[%v]", lvalue, i), item)
+		setter, err := s.itemType.DefaultValue(p, fmt.Sprintf("%v[%v]", lvalue, i), item)
 		if err != nil {
 			return "", err
 		}

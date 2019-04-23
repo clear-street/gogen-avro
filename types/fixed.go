@@ -103,7 +103,7 @@ func (s *FixedDefinition) Definition(scope map[QualifiedName]interface{}) (inter
 	return s.definition, nil
 }
 
-func (s *FixedDefinition) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *FixedDefinition) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(string); !ok {
 		return "", fmt.Errorf("Expected string as default for field %v, got %q", lvalue, rvalue)
 	}

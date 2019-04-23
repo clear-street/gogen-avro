@@ -1,7 +1,11 @@
 package types
 
+import (
+	"github.com/clear-street/gogen-avro/generator"
+)
+
 type Constructable interface {
-	ConstructorMethod() string
+	ConstructorMethod(p *generator.Package) string
 }
 
 func getConstructableForType(t AvroType) (Constructable, bool) {
