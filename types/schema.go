@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/clear-street/gogen-avro/generator"
@@ -65,10 +64,9 @@ func (namespace *Namespace) AddToPackage(p *generator.Package, headerComment str
 
 // RegisterDefinition adds a new type definition to the namespace. Returns an error if the type is already defined.
 func (n *Namespace) RegisterDefinition(d Definition) error {
-	if curDef, ok := n.Definitions[d.AvroName()]; ok {
-		if !reflect.DeepEqual(curDef, d) {
-			return fmt.Errorf("Conflicting definitions for %v", d.AvroName())
-		}
+	if _, ok := n.Definitions[d.AvroName()]; ok {
+		fmt.Printf("Ignoring duplicate definition- %v\n", d.AvroName())
+		return nil
 	}
 	n.Definitions[d.AvroName()] = d
 

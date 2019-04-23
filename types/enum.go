@@ -127,7 +127,7 @@ func (e *EnumDefinition) serializerMethodDef(p *generator.Package) string {
 }
 
 func (e *EnumDefinition) SerializerMethod(p *generator.Package) string {
-	if p.Name() != e.AvroName().Namespace {
+	if !Contains(p, e) {
 		pkg := imprt.Pkg(p.Root(), e.AvroName().Namespace)
 		return fmt.Sprintf("%s.Write%s", pkg, e.GoType())
 	}
@@ -139,7 +139,7 @@ func (e *EnumDefinition) deserializerMethodDef(p *generator.Package) string {
 }
 
 func (e *EnumDefinition) DeserializerMethod(p *generator.Package) string {
-	if p.Name() != e.AvroName().Namespace {
+	if !Contains(p, e) {
 		pkg := imprt.Pkg(p.Root(), e.AvroName().Namespace)
 		return fmt.Sprintf("%s.Read%s", pkg, e.GoType())
 	}
@@ -163,7 +163,7 @@ func (e *EnumDefinition) AddStruct(p *generator.Package, _ bool) error {
 }
 
 func (e *EnumDefinition) AddSerializer(p *generator.Package) {
-	if p.Name() != e.AvroName().Namespace {
+	if !Contains(p, e) {
 		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), e.AvroName().Namespace))
 		return
 	}
@@ -176,7 +176,7 @@ func (e *EnumDefinition) AddSerializer(p *generator.Package) {
 }
 
 func (e *EnumDefinition) AddDeserializer(p *generator.Package) {
-	if p.Name() != e.AvroName().Namespace {
+	if !Contains(p, e) {
 		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), e.AvroName().Namespace))
 		return
 	}

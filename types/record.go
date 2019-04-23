@@ -104,7 +104,7 @@ func (r *RecordDefinition) structFields(p *generator.Package) string {
 			fieldDefinitions += fmt.Sprintf("\n// %v\n", f.Doc())
 		}
 
-		if ref, ok := f.avroType.(*Reference); ok && ref.AvroName().Namespace != r.AvroName().Namespace {
+		if ref, ok := f.avroType.(*Reference); ok && !Contains(p, ref) {
 			t := imprt.Type(p.Root(), ref.AvroName().Namespace, f.Type().GoType())
 			fieldDefinitions += fmt.Sprintf("%v %v\n", f.GoName(), t)
 		} else {
@@ -147,7 +147,7 @@ func (r *RecordDefinition) deserializerMethodDef(p *generator.Package) string {
 }
 
 func (r *RecordDefinition) SerializerMethod(p *generator.Package) string {
-	if p.Name() != r.AvroName().Namespace {
+	if !Contains(p, r) {
 		pkg := imprt.Pkg(p.Root(), r.AvroName().Namespace)
 		return fmt.Sprintf("%s.Write%s", pkg, r.Name())
 	}
@@ -156,7 +156,7 @@ func (r *RecordDefinition) SerializerMethod(p *generator.Package) string {
 }
 
 func (r *RecordDefinition) DeserializerMethod(p *generator.Package) string {
-	if p.Name() != r.AvroName().Namespace {
+	if !Contains(p, r) {
 		pkg := imprt.Pkg(p.Root(), r.AvroName().Namespace)
 		return fmt.Sprintf("%s.Read%s", pkg, r.Name())
 	}
@@ -204,7 +204,7 @@ func (r *RecordDefinition) qualifiedNameMethodDef() (string, error) {
 }
 
 func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) error {
-	if p.Name() != r.AvroName().Namespace {
+	if !Contains(p, r) {
 		return nil
 	}
 
@@ -224,7 +224,7 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 
 		for _, f := range r.fields {
 			ref, ok := f.avroType.(*Reference)
-			if !ok || ref.AvroName().Namespace == r.AvroName().Namespace {
+			if !ok || Contains(p, ref) {
 				continue
 			}
 			p.AddImport(r.filename(), imprt.Path(p.Root(), ref.AvroName().Namespace))
@@ -254,7 +254,7 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 }
 
 func (r *RecordDefinition) AddSerializer(p *generator.Package) {
-	if p.Name() != r.AvroName().Namespace {
+	if !Contains(p, r) {
 		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), r.AvroName().Namespace))
 		return
 	}
@@ -271,7 +271,7 @@ func (r *RecordDefinition) AddSerializer(p *generator.Package) {
 }
 
 func (r *RecordDefinition) AddDeserializer(p *generator.Package) {
-	if p.Name() != r.AvroName().Namespace {
+	if !Contains(p, r) {
 		p.AddImport(UTIL_FILE, imprt.Path(p.Root(), r.AvroName().Namespace))
 		return
 	}
