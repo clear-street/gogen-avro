@@ -56,7 +56,7 @@ func (s *doubleField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "encoding/binary")
 }
 
-func (s *doubleField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *doubleField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(float64); !ok {
 		return "", fmt.Errorf("Expected number as default for field %v, got %q", lvalue, rvalue)
 	}

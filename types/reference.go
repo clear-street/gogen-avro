@@ -68,6 +68,6 @@ func (s *Reference) Definition(scope map[QualifiedName]interface{}) (interface{}
 	return s.def.Definition(scope)
 }
 
-func (s *Reference) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
-	return s.def.DefaultValue(lvalue, rvalue)
+func (s *Reference) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
+	return s.def.DefaultValue(p, lvalue, rvalue)
 }

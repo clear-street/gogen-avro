@@ -84,7 +84,7 @@ func (s *stringField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "math")
 }
 
-func (s *stringField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *stringField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(string); !ok {
 		return "", fmt.Errorf("Expected string as default for field %v, got %q", lvalue, rvalue)
 	}

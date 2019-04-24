@@ -60,7 +60,7 @@ func (s *bytesField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "io")
 }
 
-func (s *bytesField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *bytesField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(string); !ok {
 		return "", fmt.Errorf("Expected string as default for field %v, got %q", lvalue, rvalue)
 	}

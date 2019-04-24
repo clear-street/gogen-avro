@@ -197,7 +197,7 @@ func (s *EnumDefinition) Definition(scope map[QualifiedName]interface{}) (interf
 	return s.definition, nil
 }
 
-func (s *EnumDefinition) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *EnumDefinition) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(string); !ok {
 		return "", fmt.Errorf("Expected string as default for field %v, got %q", lvalue, rvalue)
 	}

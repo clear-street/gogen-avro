@@ -40,6 +40,6 @@ func (s *nullField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "io")
 }
 
-func (s *nullField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *nullField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	return "", nil
 }

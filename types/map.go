@@ -134,11 +134,11 @@ func (s *mapField) Definition(scope map[QualifiedName]interface{}) (interface{},
 	return s.definition, nil
 }
 
-func (s *mapField) ConstructorMethod() string {
+func (s *mapField) ConstructorMethod(p *generator.Package) string {
 	return fmt.Sprintf("make(%v)", s.GoType())
 }
 
-func (s *mapField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *mapField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	items, ok := rvalue.(map[string]interface{})
 	if !ok {
 		return "", fmt.Errorf("Expected map as default for %v, got %v", lvalue, rvalue)
@@ -146,7 +146,7 @@ func (s *mapField) DefaultValue(lvalue string, rvalue interface{}) (string, erro
 	setters := ""
 
 	for k, v := range items {
-		setter, err := s.itemType.DefaultValue(fmt.Sprintf("%v[%q]", lvalue, k), v)
+		setter, err := s.itemType.DefaultValue(p, fmt.Sprintf("%v[%q]", lvalue, k), v)
 		if err != nil {
 			return "", err
 		}

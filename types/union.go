@@ -258,7 +258,7 @@ func (s *unionField) Definition(scope map[QualifiedName]interface{}) (interface{
 	return s.definition, nil
 }
 
-func (s *unionField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *unionField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	lvalue = fmt.Sprintf("%v.%v", lvalue, s.itemType[0].Name())
-	return s.itemType[0].DefaultValue(lvalue, rvalue)
+	return s.itemType[0].DefaultValue(p, lvalue, rvalue)
 }

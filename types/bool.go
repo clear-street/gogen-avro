@@ -86,7 +86,7 @@ func (s *boolField) AddDeserializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "io")
 }
 
-func (s *boolField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (s *boolField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	if _, ok := rvalue.(bool); !ok {
 		return "", fmt.Errorf("Expected bool as default for field %v, got %q", lvalue, rvalue)
 	}
