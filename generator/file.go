@@ -55,7 +55,7 @@ func (f *File) WriteFile(pkgName, targetFile string) error {
 }
 
 func (f *File) Imports() []string {
-	imports := make([]string, 0)
+	imports := make([]string, 0, len(f.imports))
 	for i, _ := range f.imports {
 		imports = append(imports, i)
 	}
@@ -64,7 +64,7 @@ func (f *File) Imports() []string {
 }
 
 func (f *File) Structs() []string {
-	structs := make([]string, 0)
+	structs := make([]string, 0, len(f.structs))
 	for s, _ := range f.structs {
 		structs = append(structs, s)
 	}
@@ -73,7 +73,7 @@ func (f *File) Structs() []string {
 }
 
 func (f *File) Functions() []FunctionName {
-	funcs := make([]FunctionName, 0)
+	funcs := make([]FunctionName, 0, len(f.functions))
 	for f, _ := range f.functions {
 		funcs = append(funcs, f)
 	}
@@ -94,7 +94,7 @@ func (f *File) importString() string {
 		return ""
 	}
 	imports := "import (\n"
-	for i, _ := range f.imports {
+	for _, i := range f.Imports() {
 		imports += fmt.Sprintf("%q\n", i)
 	}
 	imports += ")"
@@ -105,8 +105,14 @@ func (f *File) constantString() string {
 	if len(f.constants) == 0 {
 		return ""
 	}
+	keys := make([]string, 0, len(f.constants))
+	for name := range f.constants {
+		keys = append(keys, name)
+	}
+	sort.Strings(keys)
 	constants := "const (\n"
-	for name, value := range f.constants {
+	for _, name := range keys {
+		value := f.constants[name]
 		// For strings, quote the right-hand side
 		if valueString, ok := value.(string); ok {
 			constants += fmt.Sprintf("%s = %q\n", name, valueString)
@@ -120,7 +126,7 @@ func (f *File) constantString() string {
 
 func (f *File) structString() string {
 	structs := ""
-	keys := make([]string, 0)
+	keys := make([]string, 0, len(f.structs))
 	for k := range f.structs {
 		keys = append(keys, k)
 	}
@@ -133,7 +139,7 @@ func (f *File) structString() string {
 
 func (f *File) functionString() string {
 	funcs := ""
-	keys := make(FunctionNameList, 0)
+	keys := make(FunctionNameList, 0, len(f.functions))
 	for k := range f.functions {
 		keys = append(keys, k)
 	}
