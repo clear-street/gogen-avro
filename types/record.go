@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/clear-street/gogen-avro/generator"
@@ -374,7 +375,13 @@ func (r *RecordDefinition) FieldByName(name string) *Field {
 func (r *RecordDefinition) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	items := rvalue.(map[string]interface{})
 	fieldSetters := ""
-	for k, v := range items {
+	sorted := make([]string, 0, len(items))
+	for k, _ := range items {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	for _, k := range sorted {
+		v := items[k]
 		field := r.FieldByName(k)
 		fieldSetter, err := field.Type().DefaultValue(p, fmt.Sprintf("%v.%v", lvalue, field.GoName()), v)
 		if err != nil {

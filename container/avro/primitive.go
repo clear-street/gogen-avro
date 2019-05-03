@@ -9,6 +9,7 @@ package avro
 
 import (
 	"io"
+	"sort"
 )
 
 type ByteWriter interface {
@@ -249,7 +250,13 @@ func writeMapBytes(r map[string][]byte, w io.Writer) error {
 	if err != nil || len(r) == 0 {
 		return err
 	}
-	for k, e := range r {
+	sorted := make([]string, 0, len(r))
+	for k, _ := range r {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	for _, k := range sorted {
+		e := r[k]
 		err = writeString(k, w)
 		if err != nil {
 			return err

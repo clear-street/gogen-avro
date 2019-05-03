@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/clear-street/gogen-avro/generator"
 )
@@ -145,7 +146,13 @@ func (s *mapField) DefaultValue(p *generator.Package, lvalue string, rvalue inte
 	}
 	setters := ""
 
-	for k, v := range items {
+	sorted := make([]string, 0, len(items))
+	for k, _ := range items {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	for _, k := range sorted {
+		v := items[k]
 		setter, err := s.itemType.DefaultValue(p, fmt.Sprintf("%v[%q]", lvalue, k), v)
 		if err != nil {
 			return "", err
