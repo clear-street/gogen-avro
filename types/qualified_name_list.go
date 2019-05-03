@@ -11,7 +11,7 @@ func (q QualifiedNameList) Swap(i, j int) {
 	q[i], q[j] = q[j], q[i]
 }
 
-// Sort functions by the struct to which they're attached first, then the name of the method itself. If the function isn't attached to a struct, put it at the bottom
+// Sort qualified names by their name first, then by its namespace
 func (q QualifiedNameList) Less(i, j int) bool {
 	if q[i].Name == "" && q[j].Name != "" {
 		return true
