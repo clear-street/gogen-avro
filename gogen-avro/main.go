@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/clear-street/gogen-avro/generator"
 	"github.com/clear-street/gogen-avro/imprt"
@@ -51,12 +52,21 @@ func main() {
 		}
 	}
 
+	sortedDefs := make([]types.QualifiedName, 0, len(namespace.Definitions))
+	for k, _ := range namespace.Definitions {
+		sortedDefs = append(sortedDefs, k)
+	}
+	sort.Sort(types.QualifiedNameList(sortedDefs))
+
 	pkgs := map[string]*generator.Package{}
-	for k, v := range namespace.Definitions {
+	pkgsList := make([]string, 0)
+	for _, k := range sortedDefs {
+		v := namespace.Definitions[k]
 		pkg, ok := pkgs[k.Namespace]
 		if !ok {
 			pkg = generator.NewPackage(*packageName, k.Namespace)
 			pkgs[k.Namespace] = pkg
+			pkgsList = append(pkgsList, k.Namespace)
 		}
 
 		v.AddStruct(pkg, *containers)
@@ -65,7 +75,8 @@ func main() {
 	}
 
 	commented := map[string]bool{}
-	for k, v := range pkgs {
+	for _, k := range pkgsList {
+		v := pkgs[k]
 		path := filepath.Join(targetDir, imprt.Pkg(*packageName, k))
 		if imprt.IsRootPkg(*packageName, k) {
 			path = targetDir

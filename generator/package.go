@@ -27,7 +27,8 @@ func (p *Package) Name() string {
 }
 
 func (p *Package) WriteFiles(targetDir string) error {
-	for _, f := range p.files {
+	for _, name := range p.Files() {
+		f := p.files[name]
 		err := f.WriteFile(imprt.Pkg(p.root, p.name), filepath.Join(targetDir, f.name))
 		if err != nil {
 			return err
@@ -37,7 +38,7 @@ func (p *Package) WriteFiles(targetDir string) error {
 }
 
 func (p *Package) Files() []string {
-	files := make([]string, 0)
+	files := make([]string, 0, len(p.files))
 	for file, _ := range p.files {
 		files = append(files, file)
 	}
