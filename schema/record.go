@@ -328,9 +328,9 @@ func (r *RecordDefinition) AddStruct(p *generator.Package, containers bool) erro
 			p.AddFunction(r.filename(), "", r.recordWriterMethod(), r.recordWriterMethodDef())
 		}
 
-		p.AddImport(r.filename(), "github.com/actgardner/gogen-avro/vm/types")
-		p.AddImport(r.filename(), "github.com/actgardner/gogen-avro/vm")
-		p.AddImport(r.filename(), "github.com/actgardner/gogen-avro/compiler")
+		p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/vm/types")
+		p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/vm")
+		p.AddImport(r.filename(), "github.com/clear-street/gogen-avro/compiler")
 		p.AddFunction(r.filename(), r.GoType(), "fieldTemplate", r.FieldsMethodDef(p))
 		p.AddFunction(r.filename(), r.GoType(), "recordReader", r.recordReaderDef(p))
 		p.AddFunction(r.filename(), r.GoType(), r.ConstructorMethod(p), constructorMethodDef)

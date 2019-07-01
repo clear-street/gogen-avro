@@ -3,7 +3,7 @@ package schema
 import (
 	"fmt"
 
-	"github.com/actgardner/gogen-avro/generator"
+	"github.com/clear-street/gogen-avro/generator"
 )
 
 const writeBytesMethod = `

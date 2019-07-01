@@ -1,9 +1,9 @@
 ## gogen-avro
 
 
-[![Build Status](https://travis-ci.org/actgardner/gogen-avro.svg?branch=master)](https://travis-ci.org/actgardner/gogen-avro)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/actgardner/gogen-avro/master/LICENSE)
-[![Version 5.3.0](https://img.shields.io/badge/version-5.3.0-lightgrey.svg)](https://gopkg.in/actgardner/gogen-avro.v5)
+[![Build Status](https://travis-ci.org/clear-street/gogen-avro.svg?branch=master)](https://travis-ci.org/clear-street/gogen-avro)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/clear-street/gogen-avro/master/LICENSE)
+[![Version 5.3.0](https://img.shields.io/badge/version-5.3.0-lightgrey.svg)](https://gopkg.in/clear-street/gogen-avro.v5)
 
 Generates type-safe Go code based on your Avro schemas, including serializers and deserializers that support Avro's schema evolution rules. 
 
@@ -82,7 +82,7 @@ Read Avro data from the given `io.Reader` and deserialize it into the generated 
 
 ### Working with Object Container Files (OCF)
 
-An example of how to write a container file can be found in [example/container/example.go](https://github.com/actgardner/gogen-avro/blob/master/example/container/example.go).
+An example of how to write a container file can be found in [example/container/example.go](https://github.com/clear-street/gogen-avro/blob/master/example/container/example.go).
 
 [Godocs for the container package](https://godoc.org/github.com/clear-street/gogen-avro/container)
 
@@ -185,7 +185,7 @@ When reporting issues, please include your reader and writer schemas, and the ou
 
 ```
 import (
-	"github.com/actgardner/gogen-avro/compiler"
+	"github.com/clear-street/gogen-avro/compiler"
 )
 
 func init() {

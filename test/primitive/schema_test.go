@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/actgardner/gogen-avro/compiler"
-	"github.com/actgardner/gogen-avro/schema"
-	"github.com/actgardner/gogen-avro/vm"
+	"github.com/clear-street/gogen-avro/compiler"
+	"github.com/clear-street/gogen-avro/schema"
+	"github.com/clear-street/gogen-avro/vm"
 
 	"github.com/linkedin/goavro"
 	"github.com/stretchr/testify/assert"
