@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/clear-street/gogen-avro/generator"
 	"github.com/clear-street/gogen-avro/imprt"
+	"github.com/clear-street/gogen-avro/schema"
 	"github.com/clear-street/gogen-avro/types"
 )
 
@@ -18,21 +18,18 @@ const (
 )
 
 func main() {
-	packageName := flag.String("package", "avro", "Root package")
-	containers := flag.Bool("containers", false, "Whether to generate container writer methods")
-	shortUnions := flag.Bool("short-unions", false, "Whether to use shorter names for Union types")
+	cfg := parseCmdLine()
 
-	flag.Parse()
-	if flag.NArg() < 2 {
-		fmt.Fprintf(os.Stderr, "Usage: gogen-avro [--short-unions] [--package=<root package>] [--containers] <target directory> <schema files>\n")
-		os.Exit(1)
+	namespace := schema.NewNamespace(cfg.shortUnions)
+
+	switch cfg.namespacedNames {
+	case nsShort:
+		generator.SetNamer(generator.NewNamespaceNamer(true))
+	case nsFull:
+		generator.SetNamer(generator.NewNamespaceNamer(false))
 	}
 
-	targetDir := flag.Arg(0)
-	files := flag.Args()[1:]
-	namespace := types.NewNamespace(*shortUnions)
-
-	for _, fileName := range files {
+	for _, fileName := range cfg.files {
 		schema, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error reading file %q - %v\n", fileName, err)
@@ -64,22 +61,21 @@ func main() {
 		v := namespace.Definitions[k]
 		pkg, ok := pkgs[k.Namespace]
 		if !ok {
-			pkg = generator.NewPackage(*packageName, k.Namespace)
+			pkg = generator.NewPackage(cfg.packageName, k.Namespace)
 			pkgs[k.Namespace] = pkg
 			pkgsList = append(pkgsList, k.Namespace)
 		}
 
-		v.AddStruct(pkg, *containers)
+		v.AddStruct(pkg, cfg.containers)
 		v.AddSerializer(pkg)
-		v.AddDeserializer(pkg)
 	}
 
 	commented := map[string]bool{}
 	for _, k := range pkgsList {
 		v := pkgs[k]
-		path := filepath.Join(targetDir, imprt.Pkg(*packageName, k))
-		if imprt.IsRootPkg(*packageName, k) {
-			path = targetDir
+		path := filepath.Join(cfg.targetDir, imprt.Pkg(cfg.packageName, k))
+		if imprt.IsRootPkg(cfg.packageName, k) {
+			path = cfg.targetDir
 		}
 
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
