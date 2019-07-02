@@ -421,12 +421,12 @@ func (r *RecordDefinition) defaultMethodDef(p *generator.Package) (string, error
 	return defaults, nil
 }
 
-func (r *RecordDefinition) getMethodDef() string {
+func (r *RecordDefinition) getMethodDef(p *generator.Package) string {
 	getBody := ""
 	for i, f := range r.fields {
 		getBody += fmt.Sprintf("case %v:\n", i)
 		if constructor, ok := getConstructableForType(f.Type()); ok {
-			getBody += fmt.Sprintf("r.%v = %v\n", f.GoName(), constructor.ConstructorMethod())
+			getBody += fmt.Sprintf("r.%v = %v\n", f.GoName(), constructor.ConstructorMethod(p))
 		}
 		if f.Type().WrapperType() == "" {
 			getBody += fmt.Sprintf("return r.%v\n", f.GoName())
@@ -438,7 +438,7 @@ func (r *RecordDefinition) getMethodDef() string {
 }
 
 func (r *RecordDefinition) FieldsMethodDef(p *generator.Package) string {
-	getBody := r.getMethodDef()
+	getBody := r.getMethodDef(p)
 	defaultBody, _ := r.defaultMethodDef(p)
 	return fmt.Sprintf(recordFieldTemplate, r.GoType(), getBody, defaultBody)
 }

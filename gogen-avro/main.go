@@ -10,7 +10,6 @@ import (
 	"github.com/clear-street/gogen-avro/generator"
 	"github.com/clear-street/gogen-avro/imprt"
 	"github.com/clear-street/gogen-avro/schema"
-	"github.com/clear-street/gogen-avro/types"
 )
 
 const (
@@ -49,11 +48,11 @@ func main() {
 		}
 	}
 
-	sortedDefs := make([]types.QualifiedName, 0, len(namespace.Definitions))
+	sortedDefs := make([]schema.QualifiedName, 0, len(namespace.Definitions))
 	for k, _ := range namespace.Definitions {
 		sortedDefs = append(sortedDefs, k)
 	}
-	sort.Sort(types.QualifiedNameList(sortedDefs))
+	sort.Sort(schema.QualifiedNameList(sortedDefs))
 
 	pkgs := map[string]*generator.Package{}
 	pkgsList := make([]string, 0)

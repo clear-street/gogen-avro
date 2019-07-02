@@ -60,6 +60,7 @@ func (_ *DemoSchema) SetDouble(v float64)  { panic("Unsupported operation") }
 func (_ *DemoSchema) SetBytes(v []byte)    { panic("Unsupported operation") }
 func (_ *DemoSchema) SetString(v string)   { panic("Unsupported operation") }
 func (_ *DemoSchema) SetUnionElem(v int64) { panic("Unsupported operation") }
+func (_ *DemoSchema) SetDefault(i int)     { panic("Unsupported operation") }
 func (r *DemoSchema) Get(i int) types.Field {
 	switch i {
 	case 0:

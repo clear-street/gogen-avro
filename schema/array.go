@@ -78,15 +78,15 @@ func (s *ArrayField) ItemType() AvroType {
 }
 
 func (s *ArrayField) AddSerializer(p *generator.Package) {
-	itemMethodName := s.itemType.SerializerMethod()
-	methodName := s.SerializerMethod()
-	arraySerializer := fmt.Sprintf(arraySerializerTemplate, s.SerializerMethod(), s.GoType(), itemMethodName)
+	itemMethodName := s.itemType.SerializerMethod(p)
+	methodName := s.SerializerMethod(p)
+	arraySerializer := fmt.Sprintf(arraySerializerTemplate, s.SerializerMethod(p), s.GoType(), itemMethodName)
 	s.itemType.AddSerializer(p)
 	p.AddFunction(UTIL_FILE, "", methodName, arraySerializer)
 	p.AddFunction(UTIL_FILE, "", "writeLong", writeLongMethod)
 	p.AddFunction(UTIL_FILE, "", "encodeInt", encodeIntMethod)
 	p.AddImport(UTIL_FILE, "github.com/clear-street/gogen-avro/vm/types")
-	p.AddFunction(UTIL_FILE, s.WrapperType(), "", s.appendMethodDef())
+	p.AddFunction(UTIL_FILE, s.WrapperType(), "", s.appendMethodDef(p))
 	p.AddStruct(UTIL_FILE, "ByteWriter", byteWriterInterface)
 	p.AddImport(UTIL_FILE, "io")
 }
@@ -118,7 +118,7 @@ func (s *ArrayField) DefaultValue(p *generator.Package, lvalue string, rvalue in
 	setters := fmt.Sprintf("%v = make(%v,%v)\n", lvalue, s.GoType(), len(items))
 	for i, item := range items {
 		if c, ok := getConstructableForType(s.itemType); ok {
-			setters += fmt.Sprintf("%v[%v] = %v\n", lvalue, i, c.ConstructorMethod())
+			setters += fmt.Sprintf("%v[%v] = %v\n", lvalue, i, c.ConstructorMethod(p))
 		}
 
 		setter, err := s.itemType.DefaultValue(p, fmt.Sprintf("%v[%v]", lvalue, i), item)
@@ -146,11 +146,11 @@ func (s *ArrayField) SimpleName() string {
 	return s.Name()
 }
 
-func (s *ArrayField) appendMethodDef() string {
+func (s *ArrayField) appendMethodDef(p *generator.Package) string {
 	constructElem := ""
 	ret := ""
 	if constructor, ok := getConstructableForType(s.itemType); ok {
-		constructElem = fmt.Sprintf("v = %v\n", constructor.ConstructorMethod())
+		constructElem = fmt.Sprintf("v = %v\n", constructor.ConstructorMethod(p))
 	}
 	if s.itemType.WrapperType() != "" {
 		ret = fmt.Sprintf("(*%v)(&(*r)[len(*r)-1])", s.itemType.WrapperType())

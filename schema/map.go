@@ -116,7 +116,7 @@ func (s *MapField) AddSerializer(p *generator.Package) {
 	p.AddFunction(UTIL_FILE, "", "encodeInt", encodeIntMethod)
 	p.AddFunction(UTIL_FILE, "", methodName, mapSerializer)
 	p.AddImport(UTIL_FILE, "github.com/clear-street/gogen-avro/vm/types")
-	p.AddFunction(UTIL_FILE, s.GoType(), "", s.appendMethodDef())
+	p.AddFunction(UTIL_FILE, s.GoType(), "", s.appendMethodDef(p))
 
 	p.AddImport(UTIL_FILE, "io")
 }
@@ -172,11 +172,11 @@ func (s *MapField) IsReadableBy(f AvroType) bool {
 	return false
 }
 
-func (s *MapField) appendMethodDef() string {
+func (s *MapField) appendMethodDef(p *generator.Package) string {
 	constructElem := ""
 	ret := ""
 	if constructor, ok := getConstructableForType(s.itemType); ok {
-		constructElem = fmt.Sprintf("v = %v\n", constructor.ConstructorMethod())
+		constructElem = fmt.Sprintf("v = %v\n", constructor.ConstructorMethod(p))
 	}
 	if s.itemType.WrapperType() != "" {
 		ret = fmt.Sprintf("(*%v)(&r.values[len(r.values)-1])", s.itemType.WrapperType())

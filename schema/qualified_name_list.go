@@ -1,4 +1,4 @@
-package types
+package schema
 
 // QualifiedNameList implements the Sortable interface for QualifiedNames
 type QualifiedNameList []QualifiedName

@@ -89,7 +89,7 @@ func (s *UnionField) unionEnumType() string {
 	return fmt.Sprintf("%vTypeEnum", s.Name())
 }
 
-func (s *unionField) unionEnumDef(p *generator.Package) string {
+func (s *UnionField) unionEnumDef(p *generator.Package) string {
 	var unionTypes string
 	for i, item := range s.itemType {
 		if ref, ok := item.(*Reference); ok && !Contains(p, ref) {
@@ -102,7 +102,7 @@ func (s *unionField) unionEnumDef(p *generator.Package) string {
 	return fmt.Sprintf("type %v int\nconst(\n%v)\n", s.unionEnumType(), unionTypes)
 }
 
-func (s *unionField) unionStringerMethodDef(p *generator.Package) string {
+func (s *UnionField) unionStringerMethodDef(p *generator.Package) string {
 	var cases string
 	for _, item := range s.itemType {
 		name := item.Name()
@@ -124,7 +124,7 @@ func (s *unionField) unionStringerMethodDef(p *generator.Package) string {
 	`, s.Name(), cases)
 }
 
-func (s *unionField) unionTypeDef(p *generator.Package) string {
+func (s *UnionField) unionTypeDef(p *generator.Package) string {
 	var unionFields string
 	for _, i := range s.itemType {
 		if ref, ok := i.(*Reference); ok && !Contains(p, ref) {
@@ -137,7 +137,7 @@ func (s *unionField) unionTypeDef(p *generator.Package) string {
 	return fmt.Sprintf("type %v struct{\n%v\n}\n", s.Name(), unionFields)
 }
 
-func (s *unionField) unionSetMethodDef(p *generator.Package, u AvroType) string {
+func (s *UnionField) unionSetMethodDef(p *generator.Package, u AvroType) string {
 	t := u.GoType()
 	n := u.Name()
 	if ref, ok := u.(*Reference); ok && !Contains(p, ref) {
@@ -153,7 +153,7 @@ func (s *unionField) unionSetMethodDef(p *generator.Package, u AvroType) string 
 	`, s.Name(), n, t, n, s.unionEnumType()+n)
 }
 
-func (s *unionField) unionIdentityMethodDef(p *generator.Package, u AvroType) string {
+func (s *UnionField) unionIdentityMethodDef(p *generator.Package, u AvroType) string {
 	n := u.Name()
 	if ref, ok := u.(*Reference); ok && !Contains(p, ref) {
 		n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
@@ -166,7 +166,7 @@ func (s *unionField) unionIdentityMethodDef(p *generator.Package, u AvroType) st
 	`, s.Name(), n, s.unionEnumType()+n)
 }
 
-func (s *unionField) unionSerializer(p *generator.Package) string {
+func (s *UnionField) unionSerializer(p *generator.Package) string {
 	switchCase := ""
 	for _, t := range s.itemType {
 		n := t.Name()
@@ -178,12 +178,12 @@ func (s *unionField) unionSerializer(p *generator.Package) string {
 	return fmt.Sprintf(unionSerializerTemplate, s.SerializerMethod(p), s.GoType(), switchCase, s.GoType())
 }
 
-func (s *UnionField) FieldsMethodDef() string {
+func (s *UnionField) FieldsMethodDef(p *generator.Package) string {
 	getBody := ""
 	for i, f := range s.itemType {
 		getBody += fmt.Sprintf("case %v:\n", i)
 		if constructor, ok := getConstructableForType(f); ok {
-			getBody += fmt.Sprintf("r.%v = %v\n", f.Name(), constructor.ConstructorMethod())
+			getBody += fmt.Sprintf("r.%v = %v\n", f.Name(), constructor.ConstructorMethod(p))
 		}
 		if f.WrapperType() == "" {
 			getBody += fmt.Sprintf("return r.%v", f.Name())
@@ -199,7 +199,7 @@ func (s *UnionField) filename() string {
 	return generator.ToSnake(s.Name()) + ".go"
 }
 
-func (s *UnionField) SerializerMethod() string {
+func (s *UnionField) SerializerMethod(p *generator.Package) string {
 	return fmt.Sprintf("write%v", s.Name())
 }
 
@@ -226,14 +226,14 @@ func (s *UnionField) AddStruct(p *generator.Package, containers bool) error {
 			p.AddImport(s.filename(), imprt.Path(p.Root(), ref.AvroName().Namespace))
 		}
 	}
-	p.AddFunction(s.filename(), s.GoType(), "fieldTemplate", s.FieldsMethodDef())
+	p.AddFunction(s.filename(), s.GoType(), "fieldTemplate", s.FieldsMethodDef(p))
 
 	return nil
 }
 
 func (s *UnionField) AddSerializer(p *generator.Package) {
 	p.AddImport(UTIL_FILE, "fmt")
-	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(), s.unionSerializer())
+	p.AddFunction(UTIL_FILE, "", s.SerializerMethod(p), s.unionSerializer(p))
 	p.AddStruct(UTIL_FILE, "ByteWriter", byteWriterInterface)
 	p.AddFunction(UTIL_FILE, "", "writeLong", writeLongMethod)
 	p.AddFunction(UTIL_FILE, "", "encodeInt", encodeIntMethod)
@@ -271,7 +271,7 @@ func (s *UnionField) DefaultValue(p *generator.Package, lvalue string, rvalue in
 	lvalue = fmt.Sprintf("%v.%v", lvalue, defaultType.Name())
 	constructorCall := ""
 	if constructor, ok := getConstructableForType(defaultType); ok {
-		constructorCall = fmt.Sprintf("%v = %v\n", lvalue, constructor.ConstructorMethod())
+		constructorCall = fmt.Sprintf("%v = %v\n", lvalue, constructor.ConstructorMethod(p))
 	}
 	assignment, err := defaultType.DefaultValue(p, lvalue, rvalue)
 	return init + constructorCall + assignment, err
