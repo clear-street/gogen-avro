@@ -52,6 +52,10 @@ func toCamel(s string) string {
 // ToPublicName returns a go-idiomatic public name. The Avro spec specifies names must start with [A-Za-z_] and contain [A-Za-z0-9_].
 // The golang spec says valid identifiers start with [A-Za-z_] and contain [A-Za-z0-9], but the first character must be [A-Z] for the field to be public.
 func ToPublicName(name string) string {
+	lastDot := strings.LastIndex(name, ".")
+	if lastDot >= 0 {
+		name = name[lastDot:]
+	}
 	// bleh: https://github.com/golang/go/wiki/CodeReviewComments#initialisms
 	if strings.HasSuffix(name, "_id") {
 		name = strings.TrimSuffix(name, "_id") + "ID"

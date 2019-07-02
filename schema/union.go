@@ -86,7 +86,7 @@ func (s *UnionField) GoType() string {
 }
 
 func (s *UnionField) unionEnumType() string {
-	return fmt.Sprintf("%vTypeEnum", s.Name())
+	return fmt.Sprintf("%vType", s.Name())
 }
 
 func (s *UnionField) unionEnumDef(p *generator.Package) string {
