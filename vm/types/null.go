@@ -2,19 +2,19 @@ package types
 
 type NullVal struct{}
 
-func (b *NullVal) SetBoolean(v bool) {
+func (b *NullVal) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to null field")
 }
 
-func (b *NullVal) SetInt(v int32) {
+func (b *NullVal) DeserializeInt(v int32) {
 	panic("Unable to assign boolean to null field")
 }
 
-func (b *NullVal) SetLong(v int64) {
+func (b *NullVal) DeserializeLong(v int64) {
 	panic("Unable to assign long to null field")
 }
 
-func (b *NullVal) SetFloat(v float32) {
+func (b *NullVal) DeserializeFloat(v float32) {
 	panic("Unable to assign float to null field")
 }
 
@@ -22,15 +22,15 @@ func (b *NullVal) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to null field")
 }
 
-func (b *NullVal) SetDouble(v float64) {
+func (b *NullVal) DeserializeDouble(v float64) {
 	panic("Unable to assign double to null field")
 }
 
-func (b *NullVal) SetBytes(v []byte) {
+func (b *NullVal) DeserializeBytes(v []byte) {
 	panic("Unable to assign bytes to null field")
 }
 
-func (b *NullVal) SetString(v string) {
+func (b *NullVal) DeserializeString(v string) {
 	panic("Unable to assign string to null field")
 }
 

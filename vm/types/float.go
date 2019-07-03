@@ -2,19 +2,19 @@ package types
 
 type Float float32
 
-func (b *Float) SetBoolean(v bool) {
+func (b *Float) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to float field")
 }
 
-func (b *Float) SetInt(v int32) {
+func (b *Float) DeserializeInt(v int32) {
 	*(*float32)(b) = float32(v)
 }
 
-func (b *Float) SetLong(v int64) {
+func (b *Float) DeserializeLong(v int64) {
 	*(*float32)(b) = float32(v)
 }
 
-func (b *Float) SetFloat(v float32) {
+func (b *Float) DeserializeFloat(v float32) {
 	*(*float32)(b) = v
 }
 
@@ -22,15 +22,15 @@ func (b *Float) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to float field")
 }
 
-func (b *Float) SetDouble(v float64) {
+func (b *Float) DeserializeDouble(v float64) {
 	panic("Unable to assign double to float field")
 }
 
-func (b *Float) SetBytes(v []byte) {
+func (b *Float) DeserializeBytes(v []byte) {
 	panic("Unable to assign double to float field")
 }
 
-func (b *Float) SetString(v string) {
+func (b *Float) DeserializeString(v string) {
 	panic("Unable to assign double to float field")
 }
 

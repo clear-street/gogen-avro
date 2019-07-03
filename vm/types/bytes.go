@@ -2,23 +2,23 @@ package types
 
 type Bytes []byte
 
-func (b *Bytes) SetBoolean(v bool) {
+func (b *Bytes) DeserializeBoolean(v bool) {
 	panic("Unable to assign bytes to bytes field")
 }
 
-func (b *Bytes) SetInt(v int32) {
+func (b *Bytes) DeserializeInt(v int32) {
 	panic("Unable to assign int to bytes field")
 }
 
-func (b *Bytes) SetLong(v int64) {
+func (b *Bytes) DeserializeLong(v int64) {
 	panic("Unable to assign long to bytes field")
 }
 
-func (b *Bytes) SetFloat(v float32) {
+func (b *Bytes) DeserializeFloat(v float32) {
 	panic("Unable to assign float to bytes field")
 }
 
-func (b *Bytes) SetDouble(v float64) {
+func (b *Bytes) DeserializeDouble(v float64) {
 	panic("Unable to assign double to bytes field")
 }
 
@@ -26,11 +26,11 @@ func (b *Bytes) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to bytes field")
 }
 
-func (b *Bytes) SetBytes(v []byte) {
+func (b *Bytes) DeserializeBytes(v []byte) {
 	*b = v
 }
 
-func (b *Bytes) SetString(v string) {
+func (b *Bytes) DeserializeString(v string) {
 	*b = []byte(v)
 }
 

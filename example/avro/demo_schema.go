@@ -52,15 +52,15 @@ func (r *DemoSchema) Serialize(w io.Writer) error {
 	return writeDemoSchema(r, w)
 }
 
-func (_ *DemoSchema) SetBoolean(v bool)    { panic("Unsupported operation") }
-func (_ *DemoSchema) SetInt(v int32)       { panic("Unsupported operation") }
-func (_ *DemoSchema) SetLong(v int64)      { panic("Unsupported operation") }
-func (_ *DemoSchema) SetFloat(v float32)   { panic("Unsupported operation") }
-func (_ *DemoSchema) SetDouble(v float64)  { panic("Unsupported operation") }
-func (_ *DemoSchema) SetBytes(v []byte)    { panic("Unsupported operation") }
-func (_ *DemoSchema) SetString(v string)   { panic("Unsupported operation") }
-func (_ *DemoSchema) SetUnionElem(v int64) { panic("Unsupported operation") }
-func (_ *DemoSchema) SetDefault(i int)     { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeBoolean(v bool)   { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeInt(v int32)      { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeLong(v int64)     { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeFloat(v float32)  { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeDouble(v float64) { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeBytes(v []byte)   { panic("Unsupported operation") }
+func (_ *DemoSchema) DeserializeString(v string)  { panic("Unsupported operation") }
+func (_ *DemoSchema) SetUnionElem(v int64)        { panic("Unsupported operation") }
+func (_ *DemoSchema) SetDefault(i int)            { panic("Unsupported operation") }
 func (r *DemoSchema) Get(i int) types.Field {
 	switch i {
 	case 0:

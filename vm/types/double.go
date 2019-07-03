@@ -2,23 +2,23 @@ package types
 
 type Double float64
 
-func (b *Double) SetBoolean(v bool) {
+func (b *Double) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to double field")
 }
 
-func (b *Double) SetInt(v int32) {
+func (b *Double) DeserializeInt(v int32) {
 	*(*float64)(b) = float64(v)
 }
 
-func (b *Double) SetLong(v int64) {
+func (b *Double) DeserializeLong(v int64) {
 	*(*float64)(b) = float64(v)
 }
 
-func (b *Double) SetFloat(v float32) {
+func (b *Double) DeserializeFloat(v float32) {
 	*(*float64)(b) = float64(v)
 }
 
-func (b *Double) SetDouble(v float64) {
+func (b *Double) DeserializeDouble(v float64) {
 	*(*float64)(b) = v
 }
 
@@ -26,11 +26,11 @@ func (b *Double) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to double field")
 }
 
-func (b *Double) SetBytes(v []byte) {
+func (b *Double) DeserializeBytes(v []byte) {
 	panic("Unable to assign bytes to double field")
 }
 
-func (b *Double) SetString(v string) {
+func (b *Double) DeserializeString(v string) {
 	panic("Unable to assign string to double field")
 }
 

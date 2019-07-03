@@ -5,13 +5,13 @@ package types
 // Most types only need to implement a subset
 type Field interface {
 	// Assign a primitive field
-	SetBoolean(v bool)
-	SetInt(v int32)
-	SetLong(v int64)
-	SetFloat(v float32)
-	SetDouble(v float64)
-	SetBytes(v []byte)
-	SetString(v string)
+	DeserializeBoolean(v bool)
+	DeserializeInt(v int32)
+	DeserializeLong(v int64)
+	DeserializeFloat(v float32)
+	DeserializeDouble(v float64)
+	DeserializeBytes(v []byte)
+	DeserializeString(v string)
 
 	// Get a nested field
 	Get(i int) Field

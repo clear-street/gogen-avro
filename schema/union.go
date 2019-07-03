@@ -27,7 +27,13 @@ func %v %v {
 `
 
 const unionFieldTemplate = `
-func (r %[1]v) SetLong(v int64) { 
+func (_ %[1]v) DeserializeBoolean(v bool) { panic("Unsupported operation") }
+func (_ %[1]v) DeserializeInt(v int32) { panic("Unsupported operation") }
+func (_ %[1]v) DeserializeFloat(v float32) { panic("Unsupported operation") }
+func (_ %[1]v) DeserializeDouble(v float64) { panic("Unsupported operation") }
+func (_ %[1]v) DeserializeBytes(v []byte) { panic("Unsupported operation") }
+func (_ %[1]v) DeserializeString(v string) { panic("Unsupported operation") }
+func (r %[1]v) DeserializeLong(v int64) { 
 	r.UnionType = (%[2]v)(v)
 }
 func (r %[1]v) Get(i int) types.Field {
@@ -131,14 +137,13 @@ func (s *UnionField) unionTypeDef(p *generator.Package) string {
 	return fmt.Sprintf("type %v struct{\n%v\n}\n", s.Name(), unionFields)
 }
 
-func (s *UnionField) unionSetMethodDef(p *generator.Package, u AvroType, neededFieldSets map[string]string) string {
+func (s *UnionField) unionSetMethodDef(p *generator.Package, u AvroType) string {
 	t := u.GoType()
 	n := u.Name()
 	if ref, ok := u.(*Reference); ok && !Contains(p, ref) {
 		t = imprt.Type(p.Root(), ref.AvroName().Namespace, t)
 		n = imprt.UniqName(p.Root(), ref.AvroName().Namespace, n)
 	}
-	neededFieldSets[n] = ""
 
 	return fmt.Sprintf(`
 		func (u *%v) Set%v(val %v) {
@@ -146,12 +151,6 @@ func (s *UnionField) unionSetMethodDef(p *generator.Package, u AvroType, neededF
 			u.UnionType = %v
 		}
 	`, s.Name(), n, t, n, s.unionEnumType()+n)
-}
-
-func (s *UnionField) unionMissingSetMethodDef(n string, t string) string {
-	return fmt.Sprintf(`
-		func (u *%v) Set%v(val %v) { panic("Unsupported operation") }
-	`, s.Name(), n, t)
 }
 
 func (s *UnionField) unionIdentityMethodDef(p *generator.Package, u AvroType) string {
@@ -219,27 +218,12 @@ func (s *UnionField) AddStruct(p *generator.Package, containers bool) error {
 			return err
 		}
 	}
-	neededFieldSets := map[string]string{
-		"Boolean": "bool",
-		"Int":     "int32",
-		"Float":   "float32",
-		"Double":  "float64",
-		"Bytes":   "[]byte",
-		"String":  "string",
-	}
 	for _, f := range s.itemType {
-		set := s.unionSetMethodDef(p, f, neededFieldSets)
+		set := s.unionSetMethodDef(p, f)
 		p.AddFunction(s.filename(), "set", set, set)
 
 		ident := s.unionIdentityMethodDef(p, f)
 		p.AddFunction(s.filename(), "identity", ident, ident)
-	}
-	for n, t := range neededFieldSets {
-		if t == "" {
-			continue
-		}
-		set := s.unionMissingSetMethodDef(n, t)
-		p.AddFunction(s.filename(), "set", set, set)
 	}
 	for _, f := range s.itemType {
 		if ref, ok := f.(*Reference); ok && !Contains(p, ref) {

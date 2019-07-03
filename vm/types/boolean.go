@@ -2,31 +2,31 @@ package types
 
 type Boolean bool
 
-func (b *Boolean) SetBoolean(v bool) {
+func (b *Boolean) DeserializeBoolean(v bool) {
 	*(*bool)(b) = v
 }
 
-func (b *Boolean) SetInt(v int32) {
+func (b *Boolean) DeserializeInt(v int32) {
 	panic("Unable to assign int to boolean field")
 }
 
-func (b *Boolean) SetLong(v int64) {
+func (b *Boolean) DeserializeLong(v int64) {
 	panic("Unable to assign long to boolean field")
 }
 
-func (b *Boolean) SetFloat(v float32) {
+func (b *Boolean) DeserializeFloat(v float32) {
 	panic("Unable to assign float to boolean field")
 }
 
-func (b *Boolean) SetDouble(v float64) {
+func (b *Boolean) DeserializeDouble(v float64) {
 	panic("Unable to assign double to boolean field")
 }
 
-func (b *Boolean) SetBytes(v []byte) {
+func (b *Boolean) DeserializeBytes(v []byte) {
 	panic("Unable to assign bytes to boolean field")
 }
 
-func (b *Boolean) SetString(v string) {
+func (b *Boolean) DeserializeString(v string) {
 	panic("Unable to assign string to boolean field")
 }
 

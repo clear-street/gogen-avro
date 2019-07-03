@@ -75,25 +75,25 @@ func evalInner(r io.Reader, program *Program, target types.Field, pc *int) (err 
 			case Null:
 				break
 			case Boolean:
-				target.SetBoolean(frame.Boolean)
+				target.DeserializeBoolean(frame.Boolean)
 				break
 			case Int:
-				target.SetInt(frame.Int)
+				target.DeserializeInt(frame.Int)
 				break
 			case Long:
-				target.SetLong(frame.Long)
+				target.DeserializeLong(frame.Long)
 				break
 			case Float:
-				target.SetFloat(frame.Float)
+				target.DeserializeFloat(frame.Float)
 				break
 			case Double:
-				target.SetDouble(frame.Double)
+				target.DeserializeDouble(frame.Double)
 				break
 			case Bytes:
-				target.SetBytes(frame.Bytes)
+				target.DeserializeBytes(frame.Bytes)
 				break
 			case String:
-				target.SetString(frame.String)
+				target.DeserializeString(frame.String)
 				break
 			}
 			break

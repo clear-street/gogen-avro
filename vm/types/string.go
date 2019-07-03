@@ -2,19 +2,19 @@ package types
 
 type String string
 
-func (b *String) SetBoolean(v bool) {
+func (b *String) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to string field")
 }
 
-func (b *String) SetInt(v int32) {
+func (b *String) DeserializeInt(v int32) {
 	panic("Unable to assign int to string field")
 }
 
-func (b *String) SetLong(v int64) {
+func (b *String) DeserializeLong(v int64) {
 	panic("Unable to assign long to string field")
 }
 
-func (b *String) SetFloat(v float32) {
+func (b *String) DeserializeFloat(v float32) {
 	panic("Unable to assign float to string field")
 }
 
@@ -22,15 +22,15 @@ func (b *String) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to string field")
 }
 
-func (b *String) SetDouble(v float64) {
+func (b *String) DeserializeDouble(v float64) {
 	panic("Unable to assign double to string field")
 }
 
-func (b *String) SetBytes(v []byte) {
+func (b *String) DeserializeBytes(v []byte) {
 	*(*string)(b) = string(v)
 }
 
-func (b *String) SetString(v string) {
+func (b *String) DeserializeString(v string) {
 	*(*string)(b) = v
 }
 

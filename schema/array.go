@@ -25,13 +25,13 @@ func %v(r %v, w io.Writer) error {
 const arrayWrapperTemplate = `
 type %[1]v %[2]v
 
-func (_ *%[1]v) SetBoolean(v bool) { panic("Unsupported operation") }
-func (_ *%[1]v) SetInt(v int32) { panic("Unsupported operation") }
-func (_ *%[1]v) SetLong(v int64) { panic("Unsupported operation") }
-func (_ *%[1]v) SetFloat(v float32) { panic("Unsupported operation") }
-func (_ *%[1]v) SetDouble(v float64) { panic("Unsupported operation") }
-func (_ *%[1]v) SetBytes(v []byte) { panic("Unsupported operation") }
-func (_ *%[1]v) SetString(v string) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeBoolean(v bool) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeInt(v int32) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeLong(v int64) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeFloat(v float32) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeDouble(v float64) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeBytes(v []byte) { panic("Unsupported operation") }
+func (_ *%[1]v) DeserializeString(v string) { panic("Unsupported operation") }
 func (_ *%[1]v) SetUnionElem(v int64) { panic("Unsupported operation") }
 func (_ *%[1]v) Get(i int) types.Field { panic("Unsupported operation") }
 func (_ *%[1]v) AppendMap(key string) types.Field { panic("Unsupported operation") }

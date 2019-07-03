@@ -2,19 +2,19 @@ package types
 
 type Int int32
 
-func (b *Int) SetBoolean(v bool) {
+func (b *Int) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to int field")
 }
 
-func (b *Int) SetInt(v int32) {
+func (b *Int) DeserializeInt(v int32) {
 	*(*int32)(b) = v
 }
 
-func (b *Int) SetLong(v int64) {
+func (b *Int) DeserializeLong(v int64) {
 	panic("Unable to assign long to int field")
 }
 
-func (b *Int) SetFloat(v float32) {
+func (b *Int) DeserializeFloat(v float32) {
 	panic("Unable to assign float to int field")
 }
 
@@ -22,15 +22,15 @@ func (b *Int) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to int field")
 }
 
-func (b *Int) SetDouble(v float64) {
+func (b *Int) DeserializeDouble(v float64) {
 	panic("Unable to assign double to int field")
 }
 
-func (b *Int) SetBytes(v []byte) {
+func (b *Int) DeserializeBytes(v []byte) {
 	panic("Unable to assign bytes to int field")
 }
 
-func (b *Int) SetString(v string) {
+func (b *Int) DeserializeString(v string) {
 	panic("Unable to assign string to int field")
 }
 

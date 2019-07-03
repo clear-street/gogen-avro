@@ -2,19 +2,19 @@ package types
 
 type Long int64
 
-func (b *Long) SetBoolean(v bool) {
+func (b *Long) DeserializeBoolean(v bool) {
 	panic("Unable to assign boolean to long field")
 }
 
-func (b *Long) SetInt(v int32) {
+func (b *Long) DeserializeInt(v int32) {
 	*(*int64)(b) = int64(v)
 }
 
-func (b *Long) SetLong(v int64) {
+func (b *Long) DeserializeLong(v int64) {
 	*(*int64)(b) = v
 }
 
-func (b *Long) SetFloat(v float32) {
+func (b *Long) DeserializeFloat(v float32) {
 	panic("Unable to assign float to long field")
 }
 
@@ -22,15 +22,15 @@ func (b *Long) SetUnionElem(v int64) {
 	panic("Unable to assign union elem to long field")
 }
 
-func (b *Long) SetDouble(v float64) {
+func (b *Long) DeserializeDouble(v float64) {
 	panic("Unable to assign double to long field")
 }
 
-func (b *Long) SetBytes(v []byte) {
+func (b *Long) DeserializeBytes(v []byte) {
 	panic("Unable to assign bytes to long field")
 }
 
-func (b *Long) SetString(v string) {
+func (b *Long) DeserializeString(v string) {
 	panic("Unable to assign string to long field")
 }
 
