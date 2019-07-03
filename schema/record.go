@@ -32,9 +32,13 @@ const recordSchemaNameTemplate = `func (r %v) SchemaName() string {
 `
 
 const recordConstructorTemplate = `
-func %v %v {
-	return &%v{}
-}
+	func %v %v {
+		v := &%v{
+			%v
+		}
+		%v
+		return v
+	}
 `
 
 const recordStructPublicSerializerTemplate = `
@@ -429,7 +433,11 @@ func (r *RecordDefinition) getMethodDef(p *generator.Package) string {
 			getBody += fmt.Sprintf("r.%v = %v\n", f.GoName(), constructor.ConstructorMethod(p))
 		}
 		if f.Type().WrapperType() == "" {
-			getBody += fmt.Sprintf("return r.%v\n", f.GoName())
+			pointer := "&"
+			if _, ok := f.Type().(*Reference); ok {
+				pointer = ""
+			}
+			getBody += fmt.Sprintf("return %vr.%v\n", pointer, f.GoName())
 		} else {
 			getBody += fmt.Sprintf("return (*%v)(&r.%v)\n", f.Type().WrapperType(), f.GoName())
 		}
@@ -443,8 +451,32 @@ func (r *RecordDefinition) FieldsMethodDef(p *generator.Package) string {
 	return fmt.Sprintf(recordFieldTemplate, r.GoType(), getBody, defaultBody)
 }
 
+func (r *RecordDefinition) defaultValues(p *generator.Package) (string, error) {
+	defaults := ""
+	for _, f := range r.fields {
+		if f.hasDef {
+			def, err := f.Type().DefaultValue(p, fmt.Sprintf("v.%v", f.GoName()), f.Default())
+			if err != nil {
+				return "", err
+			}
+			defaults += def + "\n"
+		}
+	}
+	return defaults, nil
+}
+
 func (r *RecordDefinition) ConstructorMethodDef(p *generator.Package) (string, error) {
-	return fmt.Sprintf(recordConstructorTemplate, r.ConstructorMethod(p), r.GoType(), r.Name()), nil
+	defaults, err := r.defaultValues(p)
+	if err != nil {
+		return "", err
+	}
+
+	fieldConstructors, err := r.fieldConstructors(p)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(recordConstructorTemplate, r.ConstructorMethod(p), r.GoType(), r.Name(), fieldConstructors, defaults), nil
 }
 
 func (r *RecordDefinition) recordReaderTypeName() string {

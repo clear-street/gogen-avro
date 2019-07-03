@@ -65,7 +65,7 @@ func main() {
 			pkgsList = append(pkgsList, k.Namespace)
 		}
 
-		v.AddStruct(pkg, cfg.containers)
+		v.AddStruct(pkg, true)
 		v.AddSerializer(pkg)
 	}
 
