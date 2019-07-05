@@ -22,7 +22,7 @@ func %v(r %v, w io.Writer) error {
 
 const unionConstructorTemplate = `
 func %v %v {
-	return %v{}
+	return &%v{}
 }
 `
 
@@ -82,7 +82,7 @@ func (s *UnionField) AvroTypes() []AvroType {
 }
 
 func (s *UnionField) GoType() string {
-	return s.Name()
+	return "*" + s.Name()
 }
 
 func (s *UnionField) unionEnumType() string {
@@ -211,7 +211,7 @@ func (s *UnionField) AddStruct(p *generator.Package, containers bool) error {
 	p.AddStruct(s.filename(), s.unionEnumType(), s.unionEnumDef(p))
 	p.AddStruct(s.filename(), s.Name(), s.unionTypeDef(p))
 	p.AddFunction(s.filename(), s.Name(), "stringer", s.unionStringerMethodDef(p))
-	p.AddFunction(s.filename(), s.GoType(), s.ConstructorMethod(), s.constructorMethodDef())
+	p.AddFunction(s.filename(), s.GoType(), s.ConstructorMethod(p), s.constructorMethodDef(p))
 	for _, f := range s.itemType {
 		err := f.AddStruct(p, containers)
 		if err != nil {
@@ -272,7 +272,7 @@ func (s *UnionField) Definition(scope map[QualifiedName]interface{}) (interface{
 
 func (s *UnionField) DefaultValue(p *generator.Package, lvalue string, rvalue interface{}) (string, error) {
 	defaultType := s.itemType[0]
-	init := fmt.Sprintf("%v = %v\n", lvalue, s.ConstructorMethod())
+	init := fmt.Sprintf("%v = %v\n", lvalue, s.ConstructorMethod(p))
 	lvalue = fmt.Sprintf("%v.%v", lvalue, defaultType.Name())
 	constructorCall := ""
 	if constructor, ok := getConstructableForType(defaultType); ok {
@@ -304,12 +304,12 @@ func (s *UnionField) IsReadableBy(f AvroType) bool {
 	return false
 }
 
-func (s *UnionField) ConstructorMethod() string {
+func (s *UnionField) ConstructorMethod(p *generator.Package) string {
 	return fmt.Sprintf("New%v()", s.Name())
 }
 
-func (s *UnionField) constructorMethodDef() string {
-	return fmt.Sprintf(unionConstructorTemplate, s.ConstructorMethod(), s.GoType(), s.Name())
+func (s *UnionField) constructorMethodDef(p *generator.Package) string {
+	return fmt.Sprintf(unionConstructorTemplate, s.ConstructorMethod(p), s.GoType(), s.Name())
 }
 
 func (s *UnionField) Equals(reader *UnionField) bool {

@@ -433,11 +433,7 @@ func (r *RecordDefinition) getMethodDef(p *generator.Package) string {
 			getBody += fmt.Sprintf("r.%v = %v\n", f.GoName(), constructor.ConstructorMethod(p))
 		}
 		if f.Type().WrapperType() == "" {
-			pointer := "&"
-			if _, ok := f.Type().(*Reference); ok {
-				pointer = ""
-			}
-			getBody += fmt.Sprintf("return %vr.%v\n", pointer, f.GoName())
+			getBody += fmt.Sprintf("return r.%v\n", f.GoName())
 		} else {
 			getBody += fmt.Sprintf("return (*%v)(&r.%v)\n", f.Type().WrapperType(), f.GoName())
 		}
