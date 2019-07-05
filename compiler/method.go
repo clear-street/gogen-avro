@@ -22,8 +22,8 @@ func newIRMethod(name string, program *irProgram) *irMethod {
 	}
 }
 
-func (p *irMethod) addLiteral(op vm.Op, operand int) {
-	p.body = append(p.body, &literalIRInstruction{vm.Instruction{op, operand}})
+func (p *irMethod) addLiteral(op vm.Op, operand int, name string) {
+	p.body = append(p.body, &literalIRInstruction{vm.Instruction{op, operand, name}, name})
 }
 
 func (p *irMethod) addMethodCall(method string) {
@@ -72,6 +72,7 @@ func (p *irMethod) VMLength() int {
 
 func (p *irMethod) compileType(writer, reader schema.AvroType) error {
 	log("compileType()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
+	name := writer.Name()
 	switch v := writer.(type) {
 	case *schema.Reference:
 		if readerRef, ok := reader.(*schema.Reference); ok || reader == nil {
@@ -91,45 +92,45 @@ func (p *irMethod) compileType(writer, reader schema.AvroType) error {
 	case *schema.UnionField:
 		return p.compileUnion(v, reader)
 	case *schema.IntField:
-		p.addLiteral(vm.Read, vm.Int)
+		p.addLiteral(vm.Read, vm.Int, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Int)
+			p.addLiteral(vm.Set, vm.Int, name)
 		}
 		return nil
 	case *schema.LongField:
-		p.addLiteral(vm.Read, vm.Long)
+		p.addLiteral(vm.Read, vm.Long, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Long)
+			p.addLiteral(vm.Set, vm.Long, name)
 		}
 		return nil
 	case *schema.StringField:
-		p.addLiteral(vm.Read, vm.String)
+		p.addLiteral(vm.Read, vm.String, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.String)
+			p.addLiteral(vm.Set, vm.String, name)
 		}
 		return nil
 	case *schema.BytesField:
-		p.addLiteral(vm.Read, vm.Bytes)
+		p.addLiteral(vm.Read, vm.Bytes, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Bytes)
+			p.addLiteral(vm.Set, vm.Bytes, name)
 		}
 		return nil
 	case *schema.FloatField:
-		p.addLiteral(vm.Read, vm.Float)
+		p.addLiteral(vm.Read, vm.Float, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Float)
+			p.addLiteral(vm.Set, vm.Float, name)
 		}
 		return nil
 	case *schema.DoubleField:
-		p.addLiteral(vm.Read, vm.Double)
+		p.addLiteral(vm.Read, vm.Double, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Double)
+			p.addLiteral(vm.Set, vm.Double, name)
 		}
 		return nil
 	case *schema.BoolField:
-		p.addLiteral(vm.Read, vm.Boolean)
+		p.addLiteral(vm.Read, vm.Boolean, name)
 		if reader != nil {
-			p.addLiteral(vm.Set, vm.Boolean)
+			p.addLiteral(vm.Set, vm.Boolean, name)
 		}
 		return nil
 	case *schema.NullField:
@@ -190,10 +191,11 @@ func (p *irMethod) compileRef(writer, reader *schema.Reference) error {
 func (p *irMethod) compileMap(writer, reader *schema.MapField) error {
 	log("compileMap()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
 	blockId := p.addBlockStart()
-	p.addLiteral(vm.Read, vm.String)
+	name := writer.Name()
+	p.addLiteral(vm.Read, vm.String, name)
 	var readerType schema.AvroType
 	if reader != nil {
-		p.addLiteral(vm.AppendMap, vm.Unused)
+		p.addLiteral(vm.AppendMap, vm.Unused, name)
 		readerType = reader.ItemType()
 	}
 	err := p.compileType(writer.ItemType(), readerType)
@@ -201,7 +203,7 @@ func (p *irMethod) compileMap(writer, reader *schema.MapField) error {
 		return err
 	}
 	if reader != nil {
-		p.addLiteral(vm.Exit, vm.Unused)
+		p.addLiteral(vm.Exit, vm.Unused, name)
 	}
 	p.addBlockEnd(blockId)
 	return nil
@@ -210,9 +212,10 @@ func (p *irMethod) compileMap(writer, reader *schema.MapField) error {
 func (p *irMethod) compileArray(writer, reader *schema.ArrayField) error {
 	log("compileArray()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
 	blockId := p.addBlockStart()
+	name := writer.Name()
 	var readerType schema.AvroType
 	if reader != nil {
-		p.addLiteral(vm.AppendArray, vm.Unused)
+		p.addLiteral(vm.AppendArray, vm.Unused, name)
 		readerType = reader.ItemType()
 	}
 	err := p.compileType(writer.ItemType(), readerType)
@@ -220,7 +223,7 @@ func (p *irMethod) compileArray(writer, reader *schema.ArrayField) error {
 		return err
 	}
 	if reader != nil {
-		p.addLiteral(vm.Exit, vm.Unused)
+		p.addLiteral(vm.Exit, vm.Unused, name)
 	}
 	p.addBlockEnd(blockId)
 	return nil
@@ -229,13 +232,14 @@ func (p *irMethod) compileArray(writer, reader *schema.ArrayField) error {
 func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error {
 	// Look up whether there's a corresonding target field and if so, parse the source field into that target
 	log("compileRecord()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
+	name := writer.Name()
 	if reader != nil {
 		for _, field := range reader.Fields() {
 			if writerField := writer.FieldByName(field.Name()); writerField == nil {
 				if !field.HasDefault() {
 					return fmt.Errorf("Incompatible schemas: field %v in reader is not present in writer and has no default value", field.Name())
 				}
-				p.addLiteral(vm.SetDefault, field.Index())
+				p.addLiteral(vm.SetDefault, field.Index(), name)
 			}
 		}
 	}
@@ -247,7 +251,7 @@ func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error 
 			readerField = reader.FieldByName(field.Name())
 			if readerField != nil {
 				readerType = readerField.Type()
-				p.addLiteral(vm.Enter, readerField.Index())
+				p.addLiteral(vm.Enter, readerField.Index(), name)
 			}
 		}
 		err := p.compileType(field.Type(), readerType)
@@ -255,7 +259,7 @@ func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error 
 			return err
 		}
 		if readerField != nil {
-			p.addLiteral(vm.Exit, vm.NoopField)
+			p.addLiteral(vm.Exit, vm.NoopField, name)
 		}
 	}
 	return nil
@@ -263,26 +267,28 @@ func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error 
 
 func (p *irMethod) compileEnum(writer, reader *schema.EnumDefinition) error {
 	log("compileEnum()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
-	p.addLiteral(vm.Read, vm.Int)
+	name := writer.Name()
+	p.addLiteral(vm.Read, vm.Int, name)
 	if reader != nil {
-		p.addLiteral(vm.Set, vm.Int)
+		p.addLiteral(vm.Set, vm.Int, name)
 	}
 	return nil
 }
 
 func (p *irMethod) compileFixed(writer, reader *schema.FixedDefinition) error {
 	log("compileFixed()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
-	p.addLiteral(vm.Read, 11+writer.SizeBytes())
+	name := writer.Name()
+	p.addLiteral(vm.Read, 11+writer.SizeBytes(), name)
 	if reader != nil {
-		p.addLiteral(vm.Set, vm.Bytes)
+		p.addLiteral(vm.Set, vm.Bytes, name)
 	}
 	return nil
 }
 
 func (p *irMethod) compileUnion(writer *schema.UnionField, reader schema.AvroType) error {
 	log("compileUnion()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
-
-	p.addLiteral(vm.Read, vm.Long)
+	name := writer.Name()
+	p.addLiteral(vm.Read, vm.Long, name)
 	errId := p.addError("Unsupported type for union")
 	switchId := p.addSwitchStart(len(writer.AvroTypes()), errId)
 writer:
@@ -291,18 +297,18 @@ writer:
 			for readerIndex, r := range unionReader.AvroTypes() {
 				if t.IsReadableBy(r) {
 					p.addSwitchCase(switchId, i, readerIndex)
-					p.addLiteral(vm.Enter, readerIndex)
+					p.addLiteral(vm.Enter, readerIndex, name)
 					err := p.compileType(t, r)
 					if err != nil {
 						return err
 					}
-					p.addLiteral(vm.Exit, vm.NoopField)
+					p.addLiteral(vm.Exit, vm.NoopField, name)
 					continue writer
 				}
 			}
 			p.addSwitchCase(switchId, i, -1)
 			typedErrId := p.addError(fmt.Sprintf("Cannot read type %v from union", t.Name()))
-			p.addLiteral(vm.Halt, typedErrId)
+			p.addLiteral(vm.Halt, typedErrId, name)
 		} else if t.IsReadableBy(reader) {
 			err := p.compileType(t, reader)
 			if err != nil {

@@ -27,9 +27,18 @@ const (
 type Instruction struct {
 	Op      Op
 	Operand int
+	Name    string
 }
 
 func (i Instruction) String() string {
+	str := i.getString()
+	if i.Name != "" {
+		str = fmt.Sprintf("%v --> %v", i.Name, str)
+	}
+	return str
+}
+
+func (i Instruction) getString() string {
 	if i.Op == Read || i.Op == Set {
 		switch i.Operand {
 		case 0:

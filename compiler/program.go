@@ -52,13 +52,13 @@ func (p *irProgram) CompileToVM() (*vm.Program, error) {
 	irProgram := make([]irInstruction, 0)
 	vmLength := 0
 
-	p.main.addLiteral(vm.Halt, 0)
+	p.main.addLiteral(vm.Halt, 0, "Halt")
 	vmLength += p.main.VMLength()
 	irProgram = append(irProgram, p.main.body...)
 
 	for _, method := range p.methods {
 		method.offset = vmLength
-		method.addLiteral(vm.Return, vm.NoopField)
+		method.addLiteral(vm.Return, vm.NoopField, "Return")
 		vmLength += method.VMLength()
 		irProgram = append(irProgram, method.body...)
 	}
