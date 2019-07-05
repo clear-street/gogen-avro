@@ -149,12 +149,12 @@ func (p *irMethod) compileRef(writer, reader *schema.Reference) error {
 	case *schema.RecordDefinition:
 		var readerDef *schema.RecordDefinition
 		var ok bool
-		recordMethodName := fmt.Sprintf("record-r-%v", writer.Def.Name())
+		recordMethodName := fmt.Sprintf("record-r-%v", writer.Def.AvroName().String())
 		if reader != nil {
 			if readerDef, ok = reader.Def.(*schema.RecordDefinition); !ok {
 				return fmt.Errorf("Incompatible types: %v %v", reader, writer)
 			}
-			recordMethodName = fmt.Sprintf("record-rw-%v", writer.Def.Name())
+			recordMethodName = fmt.Sprintf("record-rw-%v", writer.Def.AvroName().String())
 		}
 
 		if _, ok := p.program.methods[recordMethodName]; !ok {
