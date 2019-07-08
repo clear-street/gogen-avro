@@ -53,13 +53,7 @@ func (s *Reference) ResolveReferences(n *Namespace) error {
 	if s.Def == nil {
 		var ok bool
 		if s.Def, ok = n.Definitions[s.TypeName]; !ok {
-			t := QualifiedName{
-				Name:      s.TypeName.Name,
-				Namespace: "",
-			}
-			if s.Def, ok = n.Definitions[t]; !ok {
-				return fmt.Errorf("Unable to resolve definition of type %v (%v,%v)\n", s.TypeName, s.TypeName.Namespace, s.TypeName.Name)
-			}
+			return fmt.Errorf("Unable to resolve definition of type %v (%v,%v)\n", s.TypeName, s.TypeName.Namespace, s.TypeName.Name)
 		}
 		return s.Def.ResolveReferences(n)
 	}

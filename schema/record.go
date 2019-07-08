@@ -48,10 +48,14 @@ func (r %v) Serialize(w io.Writer) error {
 `
 
 const recordStructPublicDeserializerTemplate = `
-func %v(r io.Reader) (%v, error) {
+func %v(r io.Reader, schema string) (%v, error) {
 	t := %v
 
-	deser, err := compiler.CompileSchemaBytes([]byte(t.Schema()), []byte(t.Schema()))
+	schemaBytes := []byte(schema)
+	if schema == "" {
+		schemaBytes = []byte(t.Schema())
+	}
+	deser, err := compiler.CompileSchemaBytes(schemaBytes, []byte(t.Schema()))
         if err != nil {
 		return nil, err
 	}
@@ -389,6 +393,7 @@ func (r *RecordDefinition) Definition(scope map[QualifiedName]interface{}) (inte
 	}
 
 	r.metadata["fields"] = fields
+	r.metadata["namespace"] = r.AvroName().Namespace
 	return r.metadata, nil
 }
 
