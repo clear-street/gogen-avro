@@ -1,3 +1,4 @@
+// This example shows serializing and deserializing records as byte buffers without OCF framing
 package main
 
 import (
@@ -7,7 +8,6 @@ import (
 	"github.com/clear-street/gogen-avro/example/avro"
 )
 
-// This example shows serializing and deserializing records as byte buffers
 func main() {
 	// Create a new DemoSchema struct
 	demoStruct := avro.DemoSchema{

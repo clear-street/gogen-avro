@@ -1,18 +1,37 @@
-gogen-avro
-===
+## gogen-avro
 
-[![Build Status](https://travis-ci.org/actgardner/gogen-avro.svg?branch=master)](https://travis-ci.org/actgardner/gogen-avro)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/actgardner/gogen-avro/master/LICENSE)
-[![Version 5.2.0](https://img.shields.io/badge/version-5.2.0-lightgrey.svg)](https://gopkg.in/actgardner/gogen-avro.v5)
 
-Generate Go structures and serializer / deserializer methods from Avro schemas. Generated serializers/deserializers are 2-8x faster than goavro, and you get compile-time safety for getting and setting fields.
+[![Build Status](https://travis-ci.org/clear-street/gogen-avro.svg?branch=master)](https://travis-ci.org/clear-street/gogen-avro)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/clear-street/gogen-avro/master/LICENSE)
+[![Version 5.3.0](https://img.shields.io/badge/version-5.3.0-lightgrey.svg)](https://gopkg.in/clear-street/gogen-avro.v5)
+
+Generates type-safe Go code based on your Avro schemas, including serializers and deserializers that support Avro's schema evolution rules. 
+
+### Table of contents
+
+<!--ts-->
+   * [Table of contents](#table-of-contents)
+   * [Installation](#installation)
+   * [Usage](#usage)
+   * [Generated Methods](#generated-methods)
+   * [Working with Object Container Files (OCF)](#working-with-object-container-files-ocf)
+   * [Example](#example)
+   * [Naming](#naming)
+   * [Type Conversion](#type-conversion)
+   * [Versioning](#Versioning)
+   * [Reporting Issues](#reporting-issues)
+   * [Thanks](#thanks)
+<!--te-->
+
 
 ### Installation
 
-gogen-avro is a tool which you install on your system (usually on your GOPATH), and run as part of your build process. To install gogen-avro to `$GOPATH/bin/`, first download the repository:
+gogen-avro has two parts: a tool which you install on your system (usually on your GOPATH) to generate code, and a runtime library that gets imported.
+
+To install the gogen-avro executable to `$GOPATH/bin/` and generate structs, first download the repository:
 
 ```
-go get github.com/clear-street/gogen-avro
+go get -d github.com/clear-street/gogen-avro
 ```
 
 Then run:
@@ -21,22 +40,19 @@ Then run:
 go install github.com/clear-street/gogen-avro/gogen-avro
 ```
 
-Or download and install a fixed release from gopkg.in:
+We recommend pinning a specific SHA of the gogen-avro tool when you compile your schemas with a tool like [retool](https://github.com/twitchtv/retool). This will ensure your builds are repeatable.
 
-```
-go get gopkg.in/actgardner/gogen-avro.v5
-go install gopkg.in/actgardner/gogen-avro.v5
-```
+For the library imports, you should manage the dependency on this repo using [dep](https://github.com/golang/dep) or a similar tool, like any other library.
 
 ### Usage
 
 To generate Go source files from one or more Avro schema files, run:
 
 ```
-gogen-avro [--package=<package name>] [--containers] <output directory> <avro schema files>
+gogen-avro [--package=<package name>] <output directory> <avro schema files>
 ```
 
-You can also use a `go:generate` directive in a source file ([example](https://github.com/clear-street/gogen-avro/blob/master/test/primitive/schema_test.go)):
+You can also use a `go:generate` directive in a source file ([example](https://github.com/clear-street/gogen-avro/blob/master/test/primitive/generate.go#L3)):
 
 ```
 //go:generate $GOPATH/bin/gogen-avro . primitives.avsc
@@ -44,27 +60,29 @@ You can also use a `go:generate` directive in a source file ([example](https://g
 
 Note: If you want to parse multiple `.avsc` files into a single Go package (a single folder), make sure you put them all in one line. gogen-avro produces a file, `primitive.go`, that will be overwritten if you run it multiple times with different `.avsc` files and the same output folder.
 
+
+### Generated Methods 
+
 For each record in the provided schemas, gogen-avro will produce a struct, and the following methods:
 
-- `New<RecordType>()` - a constructor to create a new record struct with the default values from the Avro schema
-- `<RecordType>.Serialize(io.Writer)` - a method to encode the contents of the struct into the given `io.Writer`
-- `Deserialize<RecordType>(io.Reader)` - a method to read a struct from the given `io.Reader`
+#### `New<RecordType>()` 
+A constructor to create a new record struct, with no values set.
 
-Passing the `--containers` flag also generates a method `New<RecordType>Writer(w io.Writer, codec Codec, batchSize int)` for each record type.
-This is a convenience method to generate a new container writer.
+#### `New<RecordType>Writer(writer io.Writer, codec container.Codec, recordsPerBlock int64) (*container.Writer, error)`
+Creates a new `container.Writer` which writes generated structs to `writer` with Avro OCF format. This is the method you want if you're writing Avro to files. `codec` supports `Identity`, `Deflate` and `Snappy` encodings per the Avro spec.
 
-The containers flag is disabled by default, because the generated files have to import the containers package. 
+#### `New<RecordType>Reader(reader io.Reader) (<RecordTypeReader>, error)`
+Creates a new `<RecordTypeReader>` which reads data in the Avro OCF format into generated structs. This is the method you want if you're reading Avro data from files. It will handle the codec and schema evolution for you based on the OCF headers and the reader schema used to generate the structs. 
 
-### Container File Support
+#### `<RecordType>.Serialize(io.Writer) error`
+Write the contents of the struct into the given `io.Writer` in the Avro binary format, with no Avro Object Container File (OCF) framing.
 
-gogen-avro generates a struct definition for each record type defined in the supplied schemas. 
-The `WriteRecord` method in `container.Writer` accepts an `AvroRecord`, an interface implemented by every generated record struct.
+#### `Deserialize<RecordType>(io.Reader) (<RecordType>, error)`
+Read Avro data from the given `io.Reader` and deserialize it into the generated struct. This assumes the schema used to write the data is identical to the schema used to generate the struct. This method assumes there's no OCF framing. This method is also slow because it re-compiles the bytecode for your type every time - if you need performance you should call `compiler.Compile` once and then `vm.Eval` for each record. 
 
-To create a new `container.Writer`, you can specify the schema manually in `container.NewWriter`, or you can use the `--containers` flag to generate methods for each record type. 
+### Working with Object Container Files (OCF)
 
-An example of how to write a container file can be found in `example/container/example.go`.
-
-**Experimental:** gogen-avro now supports unpacking Object Container Files. There's a `container.Reader` which will unpack the OCF framing and feed the records into a generated struct deserializer. This should only be used when you're 100% sure the reader and writer schemas are identical - you may see panics, corrupt or incomplete data when reading with a different schema than the writer.
+An example of how to write a container file can be found in [example/container/example.go](https://github.com/clear-street/gogen-avro/blob/master/example/container/example.go).
 
 [Godocs for the container package](https://godoc.org/github.com/clear-street/gogen-avro/container)
 
@@ -76,7 +94,7 @@ The `example` directory contains simple example projects with an Avro schema. On
 # Build the Go source files from the Avro schema using the generate directive
 go generate github.com/clear-street/gogen-avro/example
 
-# Install the example projects on the gopath
+# Install the example projects on the GOPATH
 go install github.com/clear-street/gogen-avro/example/record
 go install github.com/clear-street/gogen-avro/example/container
 ```
@@ -102,15 +120,15 @@ Gogen-avro produces a Go struct which reflects the structure of your Avro schema
 |---------------|-------------------|----------------------------------------------------------------------------------------------------------------------|
 | null          | interface{}       | This is just a placeholder, nothing is encoded/decoded                                                               |
 | boolean       | bool              |                                                                                                                      |
-| int, long     | int32,int64       |                                                                                                                      |
+| int, long     | int32, int64      |                                                                                                                      |
 | float, double | float32, float64  |                                                                                                                      |
 | bytes         | []byte            |                                                                                                                      |
 | string        | string            |                                                                                                                      |
 | enum          | custom type       | Generates a type with a constant for each symbol                                                                     |
 | array<type>   | []<type>          |                                                                                                                      |
-| map<type>     | map[string]<type> |                                                                                                                      |
+| map<type>     | custom struct | Generates a struct with a field `M`, `M` has the type map[string]<type>                                                  |
 | fixed         | [<n>]byte         | Fixed fields are given a custom type, which is an alias for an appropriately sized byte array                        |
-| union         | custom type       | Unions are handled as a struct with one field per possible type, and an enum field to dictate which field to read    |
+| union         | custom struct     | Unions are handled as a struct with one field per possible type, and an enum field to dictate which field to read    |
 
 `union` is more complicated than primitive types. We generate a struct and enum whose name is uniquely determined by the types in the union. For a field whose type is `["null", "int"]` we generate the following:
 
@@ -133,38 +151,49 @@ const (
 
 ### Versioning
 
-This tool is versioned using [gopkg.in](http://labix.org/gopkg.in).
-The API is guaranteed to be stable within a release. This guarantee applies to:
-- the public members of generated structures
-- the public methods attached to generated structures
-- the command-line arguments of the tool itself
+Until version 6.0 this project used gopkg.in for versioning of both the code generation tool and library. Older versions are still available on gopkg.in.
 
-Only bugfixes will be backported to existing major releases.
-This means that source files generated with the same major release may differ, but they will never break your build.
+Releases from 6.0 onward use semver tags (ex. `v6.0.0`) which are compatible with dep and modules.
 
-4.0
----
+#### 6.0
+- Support for schema evolution
+- Support for reading Object container files
+
+#### 4.0
 - Support for writing object container files is no longer experimental
 - `container` package now works with the generated code for any record type
 - Aliases and namespaces are now used properly to resolve types
 - Record structs expose a `Schema` method which includes metadata from the schema definition 
 
-3.0
----
+#### 3.0
 - Experimental support for writing object container files
 - Improved variable and type names
 - Support for custom package names as a command line argument
 
 
-2.0
----
+#### 2.0
 - Bug fixes for arrays and maps with record members
 - Refactored internals significantly
 
-1.0
----
+#### 1.0
 - Initial release
 - No longer supported - no more bugfixes are being backported
+
+### Reporting Issues
+
+When reporting issues, please include your reader and writer schemas, and the output from the compiler logs by adding this to one of your source files:
+
+```
+import (
+	"github.com/clear-street/gogen-avro/compiler"
+)
+
+func init() {
+	compiler.LoggingEnabled = true
+}
+```
+
+The logs will be printed on stdout.
 
 ### Thanks
 

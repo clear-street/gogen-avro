@@ -1,14 +1,15 @@
+// This example shows serializing and deserializing records in a object container file
 package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/clear-street/gogen-avro/container"
 	"github.com/clear-street/gogen-avro/example/avro"
 )
 
-// This example shows serializing records in a object container file
 func main() {
 	// Create a new DemoSchema struct
 	demoStruct := avro.DemoSchema{
@@ -50,4 +51,31 @@ func main() {
 	}
 
 	fileWriter.Close()
+
+	// Open the container file
+	fileReader, err := os.Open("example_avro_container.avro")
+	if err != nil {
+		fmt.Printf("Error opening file reader: %v\n", err)
+		return
+	}
+
+	// Create a new OCF reader
+	ocfReader, err := avro.NewDemoSchemaReader(fileReader)
+	if err != nil {
+		fmt.Printf("Error creating OCF file reader: %v\n", err)
+		return
+	}
+
+	// Read the records back until the file is finished
+	for {
+		record, err := ocfReader.Read()
+		if err != nil {
+			if err == io.EOF {
+				return
+			}
+			fmt.Printf("Error reading OCF file: %v", err)
+		}
+
+		fmt.Printf("Read record: %v\n", record)
+	}
 }
