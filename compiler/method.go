@@ -73,6 +73,26 @@ func (p *irMethod) VMLength() int {
 func (p *irMethod) compileType(writer, reader schema.AvroType) error {
 	log("compileType()\n writer:\n %v\n---\nreader: %v\n---\n", writer, reader)
 	name := writer.Name()
+	// If the writer is not a union but the reader is, try and find the first matching type in the union as a target
+	if _, ok := writer.(*schema.UnionField); !ok {
+		if readerUnion, ok := reader.(*schema.UnionField); ok {
+			for readerIndex, r := range readerUnion.AvroTypes() {
+				if writer.IsReadableBy(r) {
+					p.addLiteral(vm.SetLong, readerIndex, name)
+					p.addLiteral(vm.Set, vm.Long, name)
+					p.addLiteral(vm.Enter, readerIndex, name)
+					err := p.compileType(writer, r)
+					if err != nil {
+						return err
+					}
+					p.addLiteral(vm.Exit, vm.NoopField, name)
+					return nil
+				}
+			}
+			return fmt.Errorf("Incompatible types: %v %v", reader, writer)
+		}
+	}
+
 	switch v := writer.(type) {
 	case *schema.Reference:
 		if readerRef, ok := reader.(*schema.Reference); ok || reader == nil {
@@ -235,7 +255,7 @@ func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error 
 	name := writer.Name()
 	if reader != nil {
 		for _, field := range reader.Fields() {
-			if writerField := writer.FieldByName(field.Name()); writerField == nil {
+			if writerField := writer.GetReaderField(field); writerField == nil {
 				if !field.HasDefault() {
 					return fmt.Errorf("Incompatible schemas: field %v in reader is not present in writer and has no default value", field.Name())
 				}
@@ -248,7 +268,7 @@ func (p *irMethod) compileRecord(writer, reader *schema.RecordDefinition) error 
 		var readerType schema.AvroType
 		var readerField *schema.Field
 		if reader != nil {
-			readerField = reader.FieldByName(field.Name())
+			readerField = reader.GetReaderField(field)
 			if readerField != nil {
 				readerType = readerField.Type()
 				p.addLiteral(vm.Enter, readerField.Index(), name)
@@ -293,7 +313,15 @@ func (p *irMethod) compileUnion(writer *schema.UnionField, reader schema.AvroTyp
 	switchId := p.addSwitchStart(len(writer.AvroTypes()), errId)
 writer:
 	for i, t := range writer.AvroTypes() {
-		if unionReader, ok := reader.(*schema.UnionField); ok {
+		if reader == nil {
+			// If the reader is nil, just read the field and move on
+			p.addSwitchCase(switchId, i, -1)
+			err := p.compileType(t, reader)
+			if err != nil {
+				return err
+			}
+		} else if unionReader, ok := reader.(*schema.UnionField); ok {
+			// If the reader is also a union, read into the first supported type
 			for readerIndex, r := range unionReader.AvroTypes() {
 				if t.IsReadableBy(r) {
 					p.addSwitchCase(switchId, i, readerIndex)
@@ -307,15 +335,19 @@ writer:
 				}
 			}
 			p.addSwitchCase(switchId, i, -1)
-			typedErrId := p.addError(fmt.Sprintf("Cannot read type %v from union", t.Name()))
+			typedErrId := p.addError(fmt.Sprintf("Reader schema has no field for type %v in union", t.Name()))
 			p.addLiteral(vm.Halt, typedErrId, name)
 		} else if t.IsReadableBy(reader) {
+			// If the reader is not a union but it can read this union field, support it
+			p.addSwitchCase(switchId, i, -1)
 			err := p.compileType(t, reader)
 			if err != nil {
 				return err
 			}
 		} else {
-			return fmt.Errorf("Incompatible types: %v %v", reader, writer)
+			p.addSwitchCase(switchId, i, -1)
+			typedErrId := p.addError(fmt.Sprintf("Reader schema has no field for type %v in union", t.Name()))
+			p.addLiteral(vm.Halt, typedErrId, name)
 		}
 	}
 	p.addSwitchEnd(switchId)
