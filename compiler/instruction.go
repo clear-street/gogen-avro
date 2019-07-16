@@ -152,7 +152,7 @@ func (s *switchCaseIRInstruction) Name() string {
 func (s *switchCaseIRInstruction) CompileToVM(p *irProgram) ([]vm.Instruction, error) {
 	sw := p.switches[s.switchId]
 	if s.readerIndex == -1 {
-		return []vm.Instruction{vm.Instruction{vm.Jump, sw.end}}, nil
+		return []vm.Instruction{vm.Instruction{vm.Jump, sw.end, s.Name()}}, nil
 	}
 
 	return []vm.Instruction{
