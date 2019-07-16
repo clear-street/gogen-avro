@@ -488,9 +488,18 @@ func (r *RecordDefinition) recordReaderDef(p *generator.Package) string {
 	return fmt.Sprintf(recordReaderTemplate, r.recordReaderTypeName(), r.GoType(), r.ConstructorMethod(p))
 }
 
-func (r *RecordDefinition) FieldByName(name string) *Field {
+func (r *RecordDefinition) GetReaderField(writerField *Field) *Field {
 	for _, f := range r.fields {
-		if f.Name() == name {
+		if f.IsSameField(writerField) {
+			return f
+		}
+	}
+	return nil
+}
+
+func (r *RecordDefinition) FieldByName(field string) *Field {
+	for _, f := range r.fields {
+		if f.NameMatchesAliases(field) {
 			return f
 		}
 	}
