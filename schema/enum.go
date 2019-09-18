@@ -35,6 +35,15 @@ func Parse%v(val string) %v {
 }
 `
 
+const enumTypeValidator = `
+func Validate%v(val string) bool {
+	switch val {
+		%v
+	}
+	return false
+}
+`
+
 const enumSerializerDef = `
 func %v(r %v, w io.Writer) error {
 	return writeInt(int32(r), w)
@@ -103,6 +112,14 @@ func (e *EnumDefinition) parserList() string {
 	return parserStr
 }
 
+func (e *EnumDefinition) verifierList() string {
+	parserStr := ""
+	for _, t := range e.symbols {
+		parserStr += fmt.Sprintf("case %q:\n return true\n", t)
+	}
+	return parserStr
+}
+
 func (e *EnumDefinition) structDef() string {
 	var doc string
 	if e.doc != "" {
@@ -117,6 +134,10 @@ func (e *EnumDefinition) stringerDef() string {
 
 func (e *EnumDefinition) parserDef() string {
 	return fmt.Sprintf(enumTypeParser, e.GoType(), e.GoType(), e.parserList())
+}
+
+func (e *EnumDefinition) verifierDef() string {
+	return fmt.Sprintf(enumTypeValidator, e.GoType(), e.verifierList())
 }
 
 func (e *EnumDefinition) serializerMethodDef(p *generator.Package) string {
@@ -143,6 +164,7 @@ func (e *EnumDefinition) AddStruct(p *generator.Package, _ bool) error {
 	p.AddStruct(e.filename(), e.GoType(), e.structDef())
 	p.AddFunction(e.filename(), e.GoType(), "String", e.stringerDef())
 	p.AddFunction(e.filename(), e.GoType(), "Parse", e.parserDef())
+	p.AddFunction(e.filename(), e.GoType(), "Verify", e.verifierDef())
 	return nil
 }
 
