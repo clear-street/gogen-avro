@@ -1,1 +1,6 @@
 *.swp
+bin
+event
+pkg
+.debug
+.atomenv.json
