@@ -197,8 +197,14 @@ func (s *EnumDefinition) DefaultValue(p *generator.Package, lvalue string, rvalu
 	if _, ok := rvalue.(string); !ok {
 		return "", fmt.Errorf("Expected string as default for field %v, got %q", lvalue, rvalue)
 	}
-
-	return fmt.Sprintf("%v = %v", lvalue, generator.ToPublicName(s.GoType()+strings.Title(rvalue.(string)))), nil
+	namespace := ""
+	if p.Name() != s.AvroName().Namespace {
+		lastDot := strings.LastIndex(s.AvroName().Namespace, ".")
+		if lastDot >= 0 {
+			namespace = s.AvroName().Namespace[lastDot+1:] + "."
+		}
+	}
+	return fmt.Sprintf("%v = %v", lvalue, namespace+generator.ToPublicName(s.GoType()+strings.Title(rvalue.(string)))), nil
 }
 
 func (s *EnumDefinition) IsReadableBy(d Definition) bool {
