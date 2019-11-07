@@ -1,4 +1,4 @@
-module github.com/clear-street/gogen-avro
+module github.com/clear-street/gogen-avro/gogen-avro
 
 go 1.13
 
